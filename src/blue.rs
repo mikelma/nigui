@@ -86,8 +86,6 @@ pub async fn get_data<'a>(napse: &'a Napse) -> Result<[f32;4], Box<dyn Error>> {
         })
         .collect();
 
-    println!("pkg num: {}", data[0]);
-
     let to_float = |mut v: i32| {
         if v & 0x800000 != 0 {
             v |= !0xffffff;
