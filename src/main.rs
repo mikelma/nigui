@@ -1,23 +1,14 @@
-use gui::{MyApp, blue, wave};
+use gui::{MyApp, blue, wave, wifi};
 use std::time::Duration;
 use tokio::runtime::Runtime;
 
 #[tokio::main]
 async fn main() {
+    // ===================== Wifi ===================== //
+    wifi::connect_to_napse();
+
     /*
-    // Connect to Napse
-    let napse;
-    loop {
-        println!("[INFO] Trying to connect to Napse 🧿...");
-        let res = blue::create_napse().await;
-        match  res {
-            Ok(dev) => {
-                napse = dev;
-                break;
-            },
-            Err(_) => std::thread::sleep(Duration::from_secs(2)),
-        }
-};*/
+    // ===================== Bluetooth ===================== //
     println!("[INFO] Trying to connect to Napse 🧿...");
     let napse = blue::create_napse().await.unwrap();
 
@@ -44,7 +35,7 @@ async fn main() {
             wave::read::fft_gen(); // generate the FFTs of the waves that we have just read
         }
     });
-
+    */
 
     /*
     let mut rt = Runtime::new().unwrap();
