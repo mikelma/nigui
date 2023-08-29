@@ -40,9 +40,23 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
 
         let to_float = |mut v: i32| {
             if v & 0x800000 != 0 {
-                v |= !0xffffff;
+                // v |= (!0xff000000u32) as i32;
+                v |= -16777216i32;
             }
-            (v as f64 / MAX_24_BIT) as f32
+
+            // (v as f64 / MAX_24_BIT) as f32 - 1.
+
+            let min = -8388608.0_f64;
+            let max = 8388607.0_f64;
+
+            // println!("min: {}, max: {}", min, max);
+            // panic!();
+
+            let val = v as f64;
+            let v = ((val - min) / (max - min)) as f32;
+            2.0*v - 1.0
+
+            // v as f32
         };
 
         if data.len() != 10 {
@@ -73,6 +87,20 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         }
     }
 }
+
+/*
+fn filter_signal(data: &mut [f32], fs: usize, cutof_freq: f32) {
+    for i in 0..data.len() {
+        data[i] =
+    }
+}
+
+fn filter_alpha(cutof_freq: f32) -> f32 {
+    let rc = 1.0 / (cutof_freq * 2 * 3.1416);
+    let dt = 1.0 / 250; // HACK: 250 is the sample rate
+    let alpha = dt / (rc + dt);
+    return alpha;
+}*/
 
 impl fmt::Display for NapseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
