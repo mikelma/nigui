@@ -40,8 +40,8 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                 Plot::new("Raw wave")
                     .allow_drag(false)
                     .allow_zoom(false)
-                    // .include_y(1)
-                    // .center_y_axis(true)
+                    .include_y(1)
+                    .center_y_axis(true)
                     .legend(legend)
                     .show(&mut columns[0], |plot_ui| plot_ui.line(raw_line));
 
