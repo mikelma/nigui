@@ -12,7 +12,7 @@ pub use plot::plot_waves;
 /// hence, once the limit of the buffer is reached, data points get
 /// overwriten with the new data (starting from the oldest data point).
 // pub const WAVE_BUFF_LEN: usize = 1024;
-pub const WAVE_BUFF_LEN: usize = 256;
+pub const WAVE_BUFF_LEN: usize = 512;
 /// Number of waves to track
 pub const WAVE_BUFFS_NUM: usize = 4;
 
@@ -29,8 +29,8 @@ lazy_static! {
 
     /// Global storage for the values of the FFTs. For each wave buffer (`WAVE_BUFFS_NUM`),
     /// this list contains a list containing the values of the FFT.
-    pub static ref FFT_BUFFS : RwLock<[[f32; WAVE_BUFF_LEN]; WAVE_BUFFS_NUM]> = {
-        let values = [[0f32; WAVE_BUFF_LEN]; WAVE_BUFFS_NUM];
+    pub static ref FFT_BUFFS : RwLock<[[f32; WAVE_BUFF_LEN / 2]; WAVE_BUFFS_NUM]> = {
+        let values = [[0f32; WAVE_BUFF_LEN / 2]; WAVE_BUFFS_NUM];
         RwLock::new(values)
     };
 
