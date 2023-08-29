@@ -1,4 +1,5 @@
-use std::net::UdpSocket;
+use std::net::{UdpSocket, TcpStream, Shutdown};
+use std::io::prelude::*;
 use std::error::Error;
 use std::fmt;
 use crate::wave::*;
@@ -12,12 +13,16 @@ pub enum NapseError {
 const MAX_24_BIT: f64 = 0x800000 as f64;
 
 pub fn read_napse() -> Result<(), Box<dyn Error>> {
-    // let mut stream = TcpStream::connect("192.168.1.:34254")?;
+    // let mut stream = TcpStream::connect("napse.local:1337")?;
+    let mut stream = TcpStream::connect("172.16.30.226:1337")?;
+    stream.write(&[0x55])?;
+    stream.shutdown(Shutdown::Both).expect("shutdown call failed");
 
     let socket = UdpSocket::bind("0.0.0.0:31337")?;
 
     let mut buf = [0; 40];
 
+    println!("Listening...");
     loop {
         let (amt, src) = socket.recv_from(&mut buf)?;
         // println!("> Someone @ {src} send {amt} bytes like: {:?}", buf);
@@ -41,7 +46,7 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         }
 
         let channel_data = [to_float(data[2]), to_float(data[3]), to_float(data[4]), to_float(data[5])];
-        // println!("channel data: {:?}", channel_data);
+        println!("channel data: {:?}", channel_data);
 
         // Write the readed data to the wave buffers
         {
@@ -55,7 +60,6 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         // Clear buffer
         for elem in buf.iter_mut() { *elem = 0; }
     }
-    Ok(())
 }
 
 impl fmt::Display for NapseError {
