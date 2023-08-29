@@ -1,11 +1,20 @@
 use gui::{MyApp, blue, wave, wifi};
 use std::time::Duration;
-use tokio::runtime::Runtime;
+// use tokio::runtime::Runtime;
 
 #[tokio::main]
 async fn main() {
     // ===================== Wifi ===================== //
-    wifi::connect_to_napse();
+    std::thread::spawn(|| {
+        wifi::read_napse().unwrap(); // read data in a loop
+    });
+
+    std::thread::spawn(|| {
+        loop {
+            wave::read::fft_gen(); // generate the FFTs of the waves that we have just read
+            std::thread::sleep(Duration::from_millis(100));
+        }
+    });
 
     /*
     // ===================== Bluetooth ===================== //
@@ -49,11 +58,11 @@ async fn main() {
     });*/
 
 
-    loop {} // NOTE: Just for debugging
+    // loop {} // NOTE: Just for debugging
 
     // execute GUI
-    // let options = eframe::NativeOptions::default();
-    // eframe::run_native(Box::new(MyApp::default()), options);
+    let options = eframe::NativeOptions::default();
+    eframe::run_native(Box::new(MyApp::default()), options);
 }
 
 /*
