@@ -3,6 +3,7 @@ use std::io::prelude::*;
 use std::error::Error;
 use std::fmt;
 use crate::wave::*;
+use std::time::{Duration, Instant};
 
 #[derive(Debug)]
 pub enum NapseError {
@@ -23,6 +24,9 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
     let mut buf = [0; 40];
 
     println!("Listening...");
+
+    let mut time_start = Instant::now();
+    let mut n_pkgs = 0;
     loop {
         let (amt, src) = socket.recv_from(&mut buf)?;
         // println!("> Someone @ {src} send {amt} bytes like: {:?}", buf);
@@ -46,7 +50,7 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         }
 
         let channel_data = [to_float(data[2]), to_float(data[3]), to_float(data[4]), to_float(data[5])];
-        println!("channel data: {:?}", channel_data);
+        println!("channel data: {:x} {:?}", data[2], channel_data);
 
         // Write the readed data to the wave buffers
         {
@@ -59,6 +63,14 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
 
         // Clear buffer
         for elem in buf.iter_mut() { *elem = 0; }
+
+        n_pkgs += 1;
+
+        if time_start.elapsed().as_millis() >= 1000 {
+            println!("*** num packages: {}", n_pkgs);
+            time_start = Instant::now();
+            n_pkgs = 0;
+        }
     }
 }
 
