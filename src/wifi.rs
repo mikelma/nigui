@@ -4,6 +4,8 @@ use std::error::Error;
 use std::fmt;
 use crate::wave::*;
 use std::time::{Duration, Instant};
+// use synthrs::filter::{convolve, cutoff_from_frequency, lowpass_filter};
+use biquad::*;
 
 #[derive(Debug)]
 pub enum NapseError {
@@ -15,7 +17,7 @@ const MAX_24_BIT: f64 = 0x800000 as f64;
 
 pub fn read_napse() -> Result<(), Box<dyn Error>> {
     // let mut stream = TcpStream::connect("napse.local:1337")?;
-    let mut stream = TcpStream::connect("172.16.30.226:1337")?;
+    let mut stream = TcpStream::connect("172.16.30.150:1337")?;
     stream.write(&[0x55])?;
     stream.shutdown(Shutdown::Both).expect("shutdown call failed");
 
@@ -24,6 +26,19 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
     let mut buf = [0; 40];
 
     println!("Listening...");
+
+    // create the low pass filter for 50Hz
+    // let lowpass = lowpass_filter(cutoff_from_frequency(50.0, 250), 0.01);
+    // let lowpass = lowpass.iter().map(|x| *x as f32).collect::<Vec<f32>>();
+    // let filter_size = lowpass.len();
+
+    // Cutoff and sampling frequencies
+    let f0 = 10.hz();
+    let fs = 500.hz();
+    // Create coefficients for the biquads
+    let coeffs = Coefficients::<f32>::from_params(Type::LowPass, fs, f0, Q_BUTTERWORTH_F32).unwrap();
+    // Create two different biquads
+    let mut biquad = DirectForm1::<f32>::new(coeffs);
 
     let mut time_start = Instant::now();
     let mut n_pkgs = 0;
@@ -64,13 +79,46 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         }
 
         let channel_data = [to_float(data[2]), to_float(data[3]), to_float(data[4]), to_float(data[5])];
-        println!("channel data: {:x} {:?}", data[2], channel_data);
+        // println!("channel data: {:x} {:?}", data[2], channel_data);
 
         // Write the readed data to the wave buffers
         {
             let mut buffs = WAVE_BUFFS.write()?;
             for (buf_idx, (n, buffer)) in buffs.iter_mut().enumerate() {
-                buffer[*n] = channel_data[buf_idx];
+                // buffer[*n] = channel_data[buf_idx];  // ===> ORIGINAL
+
+                if buf_idx == 0 {
+                    let val = channel_data[buf_idx];
+                    buffer[*n] = biquad.run(val);
+                }
+
+                {
+                    let record_flag = RECORDING_FLAG.read().unwrap();
+                    if *record_flag {
+                        let mut rec_buf = RECORDING_BUFFS.write().unwrap();
+                        rec_buf[buf_idx].push(buffer[*n]);
+                    }
+                }
+
+                /* ======================================
+                // Apply the filter per channel
+                let delay_buf = if *n >= filter_size {
+                    //println!("Case 1) n={n}");
+                    buffer[(*n-filter_size)..*n].to_vec()
+                } else {
+                    let m = buffer.len();
+                    let b = &buffer[0..=*n];
+                    let a = &buffer[(m - (filter_size - b.len()))..];
+                    // println!("Case 2) n={n}, a={}, b={}", a.len(), b.len());
+                    let ab = [a, b].concat();
+                    ab
+                };
+
+                let new_val: f32 = std::iter::zip(&delay_buf, &lowpass).map(|(x, y)| x*y).sum();
+                buffer[*n] = new_val;
+                =========================================== */
+
+                // Update the pointer
                 *n = if *n == WAVE_BUFF_LEN - 1 { 0 } else { *n + 1 };
             }
         }

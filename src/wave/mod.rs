@@ -41,4 +41,14 @@ lazy_static! {
     };
 
     pub static ref FFT_SCALE: f32 = 1.0 / (WAVE_BUFF_LEN as f32).sqrt();
+
+    pub static ref RECORDING_BUFFS : RwLock<Vec<Vec<f32>>> = {
+        let values = vec![vec![]];
+        RwLock::new(values)
+    };
+
+    pub static ref RECORDING_FLAG : RwLock<bool> = {
+        RwLock::new(false)
+    };
+
 }
