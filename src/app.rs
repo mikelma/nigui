@@ -1,18 +1,25 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use eframe::{egui, epi};
 use chrono::prelude::*;
+use eframe::{egui, epi};
 
-use crate::wave::WAVE_BUFFS_NUM;
 use super::wave;
+use super::wifi::{send_tcp_command, NAPSE_ADDR};
+use crate::wave::WAVE_BUFFS_NUM;
 
 pub struct MyApp {
     recording: bool,
+    mark_str: String,
+    add_str: String,
 }
 
 impl Default for MyApp {
     fn default() -> Self {
-        Self { recording: false }
+        Self {
+            recording: false,
+            mark_str: String::from("1"),
+            add_str: String::from("172.16.30.150"),
+        }
     }
 }
 
@@ -40,9 +47,59 @@ impl MyApp {
                 }
             } else {
                 let buffs = crate::wave::RECORDING_BUFFS.read().unwrap();
-                write_data_to_file(&format!("recording-{}.csv", Utc::now().to_rfc3339()), buffs.to_vec());
+                write_data_to_file(
+                    &format!("recording-{}.csv", Utc::now().to_rfc3339()),
+                    buffs.to_vec(),
+                );
             }
         }
+    }
+}
+
+impl epi::App for MyApp {
+    fn name(&self) -> &str {
+        "NIGUI"
+    }
+
+    fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.ctx().request_repaint();
+
+            ui.heading("NiGUI: Neural data visualization tool");
+
+            ui.horizontal(|ui| {
+                ui.label("Napse address: ");
+                ui.add(egui::TextEdit::singleline(&mut self.add_str).desired_width(100.0));
+                if ui.add(egui::Button::new("Play")).clicked() {
+                    *NAPSE_ADDR.write().unwrap() = Some(self.add_str.clone());
+                }
+            });
+
+            ui.horizontal(|ui| {
+                egui::widgets::global_dark_light_mode_switch(ui);
+
+                self.record_button(ui);
+
+                ui.separator();
+                ui.label("Mark number: ");
+                let response =
+                    ui.add(egui::TextEdit::singleline(&mut self.mark_str).desired_width(30.0));
+
+                if ui.add(egui::Button::new("Send mark")).clicked() {
+                    println!("Sending mark...🦝 value={}", self.mark_str);
+                    send_tcp_command(0x33, &self.mark_str);
+                }
+
+                // ui.add(egui::DragValue::new(&mut my_val).speed(0.1));
+            });
+
+            ui.separator();
+
+            wave::plot_waves(ui);
+        });
+
+        // resize the native window to be just the size we need it to be
+        frame.set_window_size(ctx.used_size());
     }
 }
 
@@ -66,29 +123,5 @@ fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
         }
         write!(out, "{}", bufs[num_channels - 1][j]).unwrap();
         write!(out, "\n").unwrap();
-    }
-}
-
-impl epi::App for MyApp {
-    fn name(&self) -> &str {
-        "NIGUI"
-    }
-
-    fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.ctx().request_repaint();
-
-            egui::widgets::global_dark_light_mode_switch(ui);
-            ui.heading("NiGUI: Neural data visualization tool");
-
-            self.record_button(ui);
-
-            ui.separator();
-
-            wave::plot_waves(ui);
-        });
-
-        // resize the native window to be just the size we need it to be
-        frame.set_window_size(ctx.used_size());
     }
 }

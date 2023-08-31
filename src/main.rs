@@ -2,8 +2,9 @@ use gui::{wave, wifi, MyApp};
 use std::time::Duration;
 // use tokio::runtime::Runtime;
 
-
 fn main() {
+    println!("🧠🦝🐙🐰");
+
     // ===================== Wifi ===================== //
     std::thread::spawn(|| {
         wifi::read_napse().unwrap(); // read data in a loop
