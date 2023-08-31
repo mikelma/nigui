@@ -1,9 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use eframe::{egui, epi};
+use chrono::prelude::*;
 
 use crate::wave::WAVE_BUFFS_NUM;
-
 use super::wave;
 
 pub struct MyApp {
@@ -39,8 +39,8 @@ impl MyApp {
                     buffs.push(vec![]);
                 }
             } else {
-                let mut buffs = crate::wave::RECORDING_BUFFS.read().unwrap();
-                write_data_to_file("test.csv", buffs.to_vec());
+                let buffs = crate::wave::RECORDING_BUFFS.read().unwrap();
+                write_data_to_file(&format!("recording-{}.csv", Utc::now().to_rfc3339()), buffs.to_vec());
             }
         }
     }
@@ -48,7 +48,7 @@ impl MyApp {
 
 fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
     use std::fs::File;
-    use std::io::{Error, Write};
+    use std::io::Write;
 
     let mut out = File::create(fname).unwrap();
     let num_channels = bufs.len();

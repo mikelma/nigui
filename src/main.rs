@@ -1,9 +1,9 @@
-use gui::{blue, wave, wifi, MyApp};
+use gui::{wave, wifi, MyApp};
 use std::time::Duration;
 // use tokio::runtime::Runtime;
 
-#[tokio::main]
-async fn main() {
+
+fn main() {
     // ===================== Wifi ===================== //
     std::thread::spawn(|| {
         wifi::read_napse().unwrap(); // read data in a loop

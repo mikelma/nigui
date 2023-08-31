@@ -3,20 +3,17 @@ use std::io::prelude::*;
 use std::error::Error;
 use std::fmt;
 use crate::wave::*;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 // use synthrs::filter::{convolve, cutoff_from_frequency, lowpass_filter};
 // use biquad::*;
 
 use digital_filter::DigitalFilter;
-use generic_array::*;
 
 #[derive(Debug)]
 pub enum NapseError {
     DeviceNotFound,
     FailedToReadAllChannels,
 }
-
-const MAX_24_BIT: f64 = 0x800000 as f64;
 
 pub fn read_napse() -> Result<(), Box<dyn Error>> {
     // let mut stream = TcpStream::connect("napse.local:1337")?;
@@ -44,72 +41,16 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
     // let mut biquad = DirectForm1::<f32>::new(coeffs);
 
     // coefficients generated with: http://t-filter.engineerjs.com/
-    let coefs = arr![f32;
--0.0007523975118029623,
-  -0.01094960581783574,
-  -0.013842869818593638,
-  -0.019926898866304207,
-  -0.024575048312386424,
-  -0.026607040840587196,
-  -0.024906724051053646,
-  -0.019070608432511366,
-  -0.009692873094479401,
-  0.00163083161860868,
-  0.01248463805323288,
-  0.020194394551224685,
-  0.022466048704565873,
-  0.01807294737447773,
-  0.007400878265218106,
-  -0.0074172324398747635,
-  -0.022726929577830672,
-  -0.03402502688062672,
-  -0.036950563532114435,
-  -0.0283416109266146,
-  -0.007112910502064243,
-  0.02525613213838398,
-  0.064770881822736,
-  0.1055840808172426,
-  0.14108743018349548,
-  0.16522897170246068,
-  0.1737814385064219,
-  0.16522897170246068,
-  0.14108743018349548,
-  0.1055840808172426,
-  0.064770881822736,
-  0.02525613213838398,
-  -0.007112910502064243,
-  -0.0283416109266146,
-  -0.036950563532114435,
-  -0.03402502688062672,
-  -0.022726929577830672,
-  -0.0074172324398747635,
-  0.007400878265218106,
-  0.01807294737447773,
-  0.022466048704565873,
-  0.020194394551224685,
-  0.01248463805323288,
-  0.00163083161860868,
-  -0.009692873094479401,
-  -0.019070608432511366,
-  -0.024906724051053646,
-  -0.026607040840587196,
-  -0.024575048312386424,
-  -0.019926898866304207,
-  -0.013842869818593638,
-  -0.01094960581783574,
-  -0.0007523975118029623
-];
-
 
     let mut filters = vec![];
     for _ in 0..WAVE_BUFFS_NUM {
-        filters.push(DigitalFilter::new(coefs));
+        filters.push(DigitalFilter::new(crate::filter_coefs::coefs()));
     }
 
     let mut time_start = Instant::now();
     let mut n_pkgs = 0;
     loop {
-        let (amt, src) = socket.recv_from(&mut buf)?;
+        let (_amt, _src) = socket.recv_from(&mut buf)?;
         // println!("> Someone @ {src} send {amt} bytes like: {:?}", buf);
 
         let data: Vec<i32> = buf
