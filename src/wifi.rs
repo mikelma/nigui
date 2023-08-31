@@ -5,7 +5,10 @@ use std::fmt;
 use crate::wave::*;
 use std::time::{Duration, Instant};
 // use synthrs::filter::{convolve, cutoff_from_frequency, lowpass_filter};
-use biquad::*;
+// use biquad::*;
+
+use digital_filter::DigitalFilter;
+use generic_array::*;
 
 #[derive(Debug)]
 pub enum NapseError {
@@ -33,12 +36,75 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
     // let filter_size = lowpass.len();
 
     // Cutoff and sampling frequencies
-    let f0 = 10.hz();
-    let fs = 500.hz();
+    // let f0 = 10.hz();
+    // let fs = 500.hz();
     // Create coefficients for the biquads
-    let coeffs = Coefficients::<f32>::from_params(Type::LowPass, fs, f0, Q_BUTTERWORTH_F32).unwrap();
+    // let coeffs = Coefficients::<f32>::from_params(Type::LowPass, fs, f0, Q_BUTTERWORTH_F32).unwrap();
     // Create two different biquads
-    let mut biquad = DirectForm1::<f32>::new(coeffs);
+    // let mut biquad = DirectForm1::<f32>::new(coeffs);
+
+    // coefficients generated with: http://t-filter.engineerjs.com/
+    let coefs = arr![f32;
+-0.0007523975118029623,
+  -0.01094960581783574,
+  -0.013842869818593638,
+  -0.019926898866304207,
+  -0.024575048312386424,
+  -0.026607040840587196,
+  -0.024906724051053646,
+  -0.019070608432511366,
+  -0.009692873094479401,
+  0.00163083161860868,
+  0.01248463805323288,
+  0.020194394551224685,
+  0.022466048704565873,
+  0.01807294737447773,
+  0.007400878265218106,
+  -0.0074172324398747635,
+  -0.022726929577830672,
+  -0.03402502688062672,
+  -0.036950563532114435,
+  -0.0283416109266146,
+  -0.007112910502064243,
+  0.02525613213838398,
+  0.064770881822736,
+  0.1055840808172426,
+  0.14108743018349548,
+  0.16522897170246068,
+  0.1737814385064219,
+  0.16522897170246068,
+  0.14108743018349548,
+  0.1055840808172426,
+  0.064770881822736,
+  0.02525613213838398,
+  -0.007112910502064243,
+  -0.0283416109266146,
+  -0.036950563532114435,
+  -0.03402502688062672,
+  -0.022726929577830672,
+  -0.0074172324398747635,
+  0.007400878265218106,
+  0.01807294737447773,
+  0.022466048704565873,
+  0.020194394551224685,
+  0.01248463805323288,
+  0.00163083161860868,
+  -0.009692873094479401,
+  -0.019070608432511366,
+  -0.024906724051053646,
+  -0.026607040840587196,
+  -0.024575048312386424,
+  -0.019926898866304207,
+  -0.013842869818593638,
+  -0.01094960581783574,
+  -0.0007523975118029623
+];
+
+
+    let mut filters = vec![];
+    for _ in 0..WAVE_BUFFS_NUM {
+        filters.push(DigitalFilter::new(coefs));
+    }
 
     let mut time_start = Instant::now();
     let mut n_pkgs = 0;
@@ -87,10 +153,10 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
             for (buf_idx, (n, buffer)) in buffs.iter_mut().enumerate() {
                 // buffer[*n] = channel_data[buf_idx];  // ===> ORIGINAL
 
-                if buf_idx == 0 {
-                    let val = channel_data[buf_idx];
-                    buffer[*n] = biquad.run(val);
-                }
+                let val = channel_data[buf_idx];
+                // buffer[*n] = biquad.run(val);
+                buffer[*n] = filters[buf_idx].filter(val);
+                // buffer[*n] = val;
 
                 {
                     let record_flag = RECORDING_FLAG.read().unwrap();
