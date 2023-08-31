@@ -100,7 +100,7 @@ pub fn fft_gen() {
         FFT.process(&mut complex);
 
         for (i, d) in complex.iter().skip(1).take(complex.len() / 2).enumerate() {
-            fft_buff[i] = d.norm()**FFT_SCALE;
+            fft_buff[i] = d.norm() * *FFT_SCALE;
         }
     }
 }

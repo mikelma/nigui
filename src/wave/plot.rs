@@ -12,7 +12,7 @@ use super::*;
 pub fn plot_waves(ui: &mut egui::Ui) {
     let space = Vec2::from(&[
         ui.available_width(),
-        ( ui.available_height() / WAVE_BUFFS_NUM as f32 ) - 5.,
+        (ui.available_height() / WAVE_BUFFS_NUM as f32) - 5.,
     ]);
 
     // read the data from the global buffers
@@ -51,7 +51,6 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                     // .include_y(1024)
                     // .center_y_axis(true)
                     .show(&mut columns[1], |plot_ui| plot_ui.line(fft_line));
-
             });
         });
     }

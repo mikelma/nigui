@@ -1,4 +1,4 @@
-use gui::{MyApp, blue, wave, wifi};
+use gui::{blue, wave, wifi, MyApp};
 use std::time::Duration;
 // use tokio::runtime::Runtime;
 
@@ -56,7 +56,6 @@ async fn main() {
         }
         }
     });*/
-
 
     // loop {} // NOTE: Just for debugging
 

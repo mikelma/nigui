@@ -12,27 +12,24 @@ pub struct MyApp {
 
 impl Default for MyApp {
     fn default() -> Self {
-        Self {
-            recording: false,
-        }
+        Self { recording: false }
     }
 }
 
 impl MyApp {
-
     fn record_button(&mut self, ui: &mut egui::Ui) {
         let text = if self.recording {
             "Stop recording"
-        } else { "Start recording" };
+        } else {
+            "Start recording"
+        };
 
         if ui.add(egui::Button::new(text)).clicked() {
-
             self.recording = !self.recording;
 
             {
                 let mut flag = crate::wave::RECORDING_FLAG.write().unwrap();
                 *flag = self.recording;
-
             }
 
             if self.recording {
@@ -47,7 +44,6 @@ impl MyApp {
             }
         }
     }
-
 }
 
 fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
@@ -56,17 +52,19 @@ fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
 
     let mut out = File::create(fname).unwrap();
     let num_channels = bufs.len();
-    for i in 0..num_channels-1 {
+    for i in 0..num_channels - 1 {
         write!(out, "channel-{},", i).unwrap();
     }
-    write!(out, "channel-{}", num_channels-1).unwrap();
+    write!(out, "channel-{}", num_channels - 1).unwrap();
 
     write!(out, "\n").unwrap();
-    for j in 0..bufs[0].len() { // for each data point
-        for i in 0..num_channels-1 { // for each channel
+    for j in 0..bufs[0].len() {
+        // for each data point
+        for i in 0..num_channels - 1 {
+            // for each channel
             write!(out, "{},", bufs[i][j]).unwrap();
         }
-        write!(out, "{}", bufs[num_channels-1][j]).unwrap();
+        write!(out, "{}", bufs[num_channels - 1][j]).unwrap();
         write!(out, "\n").unwrap();
     }
 }

@@ -1,11 +1,9 @@
 use btleplug::api::Characteristic;
-use btleplug::api::{
-    Central, Manager as _, Peripheral as _, ScanFilter, WriteType,
-};
+use btleplug::api::{Central, Manager as _, Peripheral as _, ScanFilter, WriteType};
 use btleplug::platform::{Manager, Peripheral};
 use std::error::Error;
-use std::time::Duration;
 use std::fmt;
+use std::time::Duration;
 
 use tokio::time;
 use uuid::Uuid;
@@ -76,14 +74,12 @@ pub async fn read_to_plots(napse: &Napse) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub async fn get_data<'a>(napse: &'a Napse) -> Result<[f32;4], Box<dyn Error>> {
+pub async fn get_data<'a>(napse: &'a Napse) -> Result<[f32; 4], Box<dyn Error>> {
     let bytes = napse.device.read(&napse.char_data).await?;
 
     let data: Vec<i32> = bytes
         .chunks(4)
-        .map(|v| {
-            i32::from_le_bytes([v[0], v[1], v[2], v[3]])
-        })
+        .map(|v| i32::from_le_bytes([v[0], v[1], v[2], v[3]]))
         .collect();
 
     let to_float = |mut v: i32| {
@@ -96,7 +92,12 @@ pub async fn get_data<'a>(napse: &'a Napse) -> Result<[f32;4], Box<dyn Error>> {
     if data.len() != 10 {
         Err(Box::new(NapseError::FailedToReadAllChannels))
     } else {
-        Ok([to_float(data[2]), to_float(data[3]), to_float(data[4]), to_float(data[5])])
+        Ok([
+            to_float(data[2]),
+            to_float(data[3]),
+            to_float(data[4]),
+            to_float(data[5]),
+        ])
     }
 }
 
@@ -148,8 +149,7 @@ pub async fn discover_napse() -> Result<Peripheral, Box<dyn Error>> {
             // discover services and characteristics
             napse.discover_services().await?;
             Ok(napse)
-
-        },
+        }
         None => Err(Box::new(NapseError::DeviceNotFound)),
     }
 }
@@ -158,7 +158,9 @@ impl fmt::Display for NapseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             NapseError::DeviceNotFound => write!(f, "Napse device not found"),
-            NapseError::FailedToReadAllChannels => write!(f, "Failed to read all the channels of the Napse device"),
+            NapseError::FailedToReadAllChannels => {
+                write!(f, "Failed to read all the channels of the Napse device")
+            }
         }
     }
 }
