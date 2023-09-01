@@ -40,7 +40,15 @@ fn buffer_sync_loop() {
     let wait = Duration::from_secs_f64(wait_time);
     let mut lasts = vec![0.0; WAVE_BUFFS_NUM];
     let mut val = 0.0;
+
+    // create the low pass filter for 50Hz
+    let mut filters = vec![];
+    for _ in 0..WAVE_BUFFS_NUM {
+        filters.push(DigitalFilter::new(crate::filter_coefs::coefs()));
+    }
+
     loop {
+        let now = Instant::now();
         {
             let mut pre_buf = PRE_BUFFS.write().unwrap();
             let mut wave_buf = WAVE_BUFFS.write().unwrap();
@@ -50,6 +58,8 @@ fn buffer_sync_loop() {
                     None => lasts[buf_idx],
                 };
 
+                val = filters[buf_idx].filter(val);
+
                 buff[*n] = val;
                 lasts[buf_idx] = val;
 
@@ -57,7 +67,8 @@ fn buffer_sync_loop() {
                 *n = if *n == WAVE_BUFF_LEN - 1 { 0 } else { *n + 1 };
             }
         }
-        thread::sleep(wait);
+        let elapsed_time = now.elapsed();
+        thread::sleep(wait - elapsed_time);
     }
 }
 

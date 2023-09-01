@@ -3,8 +3,10 @@ use generic_array::*;
 
 /// Returns the coefficients for the 50Hz FIR filter.
 // Values generated using: https://fiiir.com/
-pub fn coefs() -> GenericArray<f32, UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B1>, B1>, B0>, B0>, B1>, B1>, B0>, B1>> {
+// pub fn coefs() -> GenericArray<f32, UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B1>, B1>, B0>, B0>, B1>, B1>, B0>, B1>> {
+pub fn coefs() -> GenericArray<f32, UInt<UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B1>, B0>, B1>, B0>, B0>, B1>> {
     arr![f32;
+    /*
     0.000000000000000000,
     -0.000000014878493626,
     -0.000000011755610230,
@@ -465,10 +467,10 @@ pub fn coefs() -> GenericArray<f32, UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt
     0.000000090281993659,
     -0.000000011755610230,
     -0.000000014878493626,
-    0.000000000000000000
+         0.000000000000000000
+         */
     // Fs: 500Hz
     // Cutoff: 30 Hz
-    /*
     0.000335663804384691,
     0.000185977920694039,
     0.000000000000000000,
@@ -573,6 +575,6 @@ pub fn coefs() -> GenericArray<f32, UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UInt
     -0.000209601405729659,
     0.000000000000000000,
     0.000185977920694039,
-    0.000335663804384691 */
+    0.000335663804384691
     ]
 }
