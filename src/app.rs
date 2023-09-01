@@ -42,7 +42,7 @@ impl MyApp {
             if self.recording {
                 let mut buffs = crate::wave::RECORDING_BUFFS.write().unwrap();
                 buffs.clear();
-                for _ in 0..WAVE_BUFFS_NUM {
+                for _ in 0..(WAVE_BUFFS_NUM+1) {  // create an extra buffer for the marks
                     buffs.push(vec![]);
                 }
             } else {
@@ -86,7 +86,8 @@ impl epi::App for MyApp {
 
                 if ui.add(egui::Button::new("Send mark")).clicked() {
                     println!("Sending mark...🦝 value={}", self.mark_str);
-                    send_tcp_command(0x33, &self.mark_str).unwrap();
+                    let m: u8 = self.mark_str.parse().unwrap(); // TODO: Handle the error better
+                    send_tcp_command(0x33, &[m]).unwrap();
                 }
             });
 
@@ -105,20 +106,20 @@ fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
     use std::io::Write;
 
     let mut out = File::create(fname).unwrap();
-    let num_channels = bufs.len();
-    for i in 0..num_channels - 1 {
+    let num_bufs = bufs.len();
+    for i in 0..num_bufs-1 {
         write!(out, "channel-{},", i).unwrap();
     }
-    write!(out, "channel-{}", num_channels - 1).unwrap();
+    write!(out, "mark").unwrap();
 
     write!(out, "\n").unwrap();
     for j in 0..bufs[0].len() {
         // for each data point
-        for i in 0..num_channels - 1 {
+        for i in 0..num_bufs-1 {
             // for each channel
             write!(out, "{},", bufs[i][j]).unwrap();
         }
-        write!(out, "{}", bufs[num_channels - 1][j]).unwrap();
+        write!(out, "{}", bufs[num_bufs - 1][j]).unwrap();
         write!(out, "\n").unwrap();
     }
 }

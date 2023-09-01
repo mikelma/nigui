@@ -23,13 +23,12 @@ pub enum NapseError {
     FailedToReadAllChannels,
 }
 
-pub fn send_tcp_command(cmd: u8, payload: &str) -> Result<(), Box<dyn Error>> {
-    let pld = payload.to_string();
+pub fn send_tcp_command(cmd: u8, payload: &[u8]) -> Result<(), Box<dyn Error>> {
+    let pld = payload.to_vec();
     let addr = NAPSE_ADDR.read().unwrap().clone().unwrap();
     std::thread::spawn(move || {
         let mut stream = TcpStream::connect(&format!("{}:1337", addr)).unwrap();
-        let str_bytes = pld.as_bytes();
-        stream.write(&[&[cmd], str_bytes].concat()).unwrap();
+        stream.write(&[&[cmd], pld.as_slice()].concat()).unwrap();
         stream.shutdown(Shutdown::Both).unwrap();
     });
 
@@ -75,7 +74,7 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         thread::sleep(Duration::from_millis(500));
     }
 
-    send_tcp_command(0x55, "")?; // send start command
+    send_tcp_command(0x55, &[])?; // send start command
 
     // start buffer synchronization
     thread::spawn(|| {
@@ -84,7 +83,7 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
 
     let socket = UdpSocket::bind("0.0.0.0:31337")?;
 
-    let mut buf = [0; 40];
+    let mut buf = [0; 44];
 
     println!("Listening...");
 
@@ -111,7 +110,7 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
             2.0 * v - 1.0
         };
 
-        if data.len() != 10 {
+        if data.len() != 11 {
             return Err(Box::new(NapseError::FailedToReadAllChannels));
         }
 
@@ -126,7 +125,6 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         {
             let mut buffs = PRE_BUFFS.write()?;
             for (buf_idx, buffer) in buffs.iter_mut().enumerate() {
-
                 let val = channel_data[buf_idx];
                 buffer.push(val);
 
@@ -136,6 +134,11 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
                     if *record_flag {
                         let mut rec_buf = RECORDING_BUFFS.write().unwrap();
                         rec_buf[buf_idx].push(val);
+
+                        if buf_idx == WAVE_BUFFS_NUM-1 {
+                            let mark = buf[40];
+                            rec_buf[WAVE_BUFFS_NUM].push(mark as f32);
+                        }
                     }
                 }
             }
@@ -149,7 +152,7 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         // Package counting
         n_pkgs += 1;
         if time_start.elapsed().as_millis() >= 1000 {
-            println!("*** num packages: {}", n_pkgs);
+            // println!("*** num packages: {}", n_pkgs);
             time_start = Instant::now();
             n_pkgs = 0;
         }
