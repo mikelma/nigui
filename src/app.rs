@@ -89,8 +89,6 @@ impl epi::App for MyApp {
                     println!("Sending mark...🦝 value={}", self.mark_str);
                     send_tcp_command(0x33, &self.mark_str);
                 }
-
-                // ui.add(egui::DragValue::new(&mut my_val).speed(0.1));
             });
 
             ui.separator();
