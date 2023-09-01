@@ -82,12 +82,11 @@ impl epi::App for MyApp {
 
                 ui.separator();
                 ui.label("Mark number: ");
-                let response =
-                    ui.add(egui::TextEdit::singleline(&mut self.mark_str).desired_width(30.0));
+                ui.add(egui::TextEdit::singleline(&mut self.mark_str).desired_width(30.0));
 
                 if ui.add(egui::Button::new("Send mark")).clicked() {
                     println!("Sending mark...🦝 value={}", self.mark_str);
-                    send_tcp_command(0x33, &self.mark_str);
+                    send_tcp_command(0x33, &self.mark_str).unwrap();
                 }
             });
 
