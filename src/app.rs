@@ -31,7 +31,12 @@ impl MyApp {
             "Start recording"
         };
 
-        if ui.add(egui::Button::new(text)).clicked() {
+        let mut button = egui::Button::new(text);
+        if self.recording {
+            button = button.fill(egui::Color32::DARK_RED);
+        }
+
+        if ui.add(button).clicked() {
             self.recording = !self.recording;
 
             {
@@ -64,6 +69,21 @@ impl epi::App for MyApp {
     fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.ctx().request_repaint();
+
+
+            /*
+            let shorcut = egui::KeyboardShorcut::new(egui::Modifiers::CTRL, Key::);
+            if ctx.input(|i| i.consume_shorcut()) {
+                self.text.push_str("\nPressed");
+            }
+             */
+
+            /*
+            ctx.input(|i| {
+                if i.key_pressed(egui::Key::Num2) {
+                }
+            });*/
+
 
             ui.heading("NiGUI: Neural data visualization tool");
 
