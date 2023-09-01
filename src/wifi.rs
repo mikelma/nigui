@@ -6,11 +6,15 @@ use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::sync::RwLock;
 use std::thread;
 use std::time::{Duration, Instant};
-
 use digital_filter::DigitalFilter;
 
 lazy_static! {
-    pub static ref NAPSE_ADDR: RwLock<Option<String>> = { RwLock::new(None) };
+    pub static ref NAPSE_ADDR: RwLock<Option<String>> = RwLock::new(None);
+
+    pub static ref PRE_BUFFS: RwLock<Vec<Vec<f32>>> = {
+        let buf = vec![vec![]; WAVE_BUFFS_NUM];
+        RwLock::new(buf)
+    };
 }
 
 #[derive(Debug)]
@@ -32,6 +36,32 @@ pub fn send_tcp_command(cmd: u8, payload: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn buffer_sync_loop() {
+    let wait_time = 1.0 / SAMPLING_RATE as f64;
+    let wait = Duration::from_secs_f64(wait_time);
+    let mut lasts = vec![0.0; WAVE_BUFFS_NUM];
+    let mut val = 0.0;
+    loop {
+        {
+            let mut pre_buf = PRE_BUFFS.write().unwrap();
+            let mut wave_buf = WAVE_BUFFS.write().unwrap();
+            for (buf_idx, (n, buff)) in wave_buf.iter_mut().enumerate() {
+                val = match pre_buf[buf_idx].pop() {
+                    Some(v) => v,
+                    None => lasts[buf_idx],
+                };
+
+                buff[*n] = val;
+                lasts[buf_idx] = val;
+
+                // Update the pointer
+                *n = if *n == WAVE_BUFF_LEN - 1 { 0 } else { *n + 1 };
+            }
+        }
+        thread::sleep(wait);
+    }
+}
+
 pub fn read_napse() -> Result<(), Box<dyn Error>> {
     println!("Waiting to press play...");
     loop {
@@ -47,17 +77,16 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
 
     send_tcp_command(0x55, "")?; // send start command
 
+    // start buffer synchronization
+    thread::spawn(|| {
+        buffer_sync_loop();
+    });
+
     let socket = UdpSocket::bind("0.0.0.0:31337")?;
 
     let mut buf = [0; 40];
 
     println!("Listening...");
-
-    // create the low pass filter for 50Hz
-    let mut filters = vec![];
-    for _ in 0..WAVE_BUFFS_NUM {
-        filters.push(DigitalFilter::new(crate::filter_coefs::coefs()));
-    }
 
     let mut time_start = Instant::now();
     let mut n_pkgs = 0;
@@ -95,23 +124,20 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
 
         // Write the readed data to the wave buffers
         {
-            let mut buffs = WAVE_BUFFS.write()?;
-            for (buf_idx, (n, buffer)) in buffs.iter_mut().enumerate() {
+            let mut buffs = PRE_BUFFS.write()?;
+            for (buf_idx, buffer) in buffs.iter_mut().enumerate() {
 
                 let val = channel_data[buf_idx];
-                buffer[*n] = filters[buf_idx].filter(val);
-                // buffer[*n] = val; // no filter
+                buffer.push(val);
 
+                // Wave recording
                 {
                     let record_flag = RECORDING_FLAG.read().unwrap();
                     if *record_flag {
                         let mut rec_buf = RECORDING_BUFFS.write().unwrap();
-                        rec_buf[buf_idx].push(buffer[*n]);
+                        rec_buf[buf_idx].push(val);
                     }
                 }
-
-                // Update the pointer
-                *n = if *n == WAVE_BUFF_LEN - 1 { 0 } else { *n + 1 };
             }
         }
 
