@@ -6,7 +6,7 @@ use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::sync::RwLock;
 use std::thread;
 use std::time::{Duration, Instant};
-use digital_filter::DigitalFilter;
+use biquad::*;
 
 lazy_static! {
     pub static ref NAPSE_ADDR: RwLock<Option<String>> = RwLock::new(None);
@@ -41,10 +41,17 @@ fn buffer_sync_loop() {
     let mut lasts = vec![0.0; WAVE_BUFFS_NUM];
     let mut val = 0.0;
 
-    // create the low pass filter for 50Hz
+    // Cutoff and sampling frequencies
+    let f0 = 40.hz();
+    let fs = SAMPLING_RATE.hz();
+
+    // Create coefficients for the biquads
+    let coeffs = Coefficients::<f32>::from_params(Type::LowPass, fs, f0, Q_BUTTERWORTH_F32).unwrap();
+
+    // Initialize one filter for each channel
     let mut filters = vec![];
     for _ in 0..WAVE_BUFFS_NUM {
-        filters.push(DigitalFilter::new(crate::filter_coefs::coefs()));
+        filters.push(DirectForm1::<f32>::new(coeffs));
     }
 
     loop {
@@ -58,7 +65,7 @@ fn buffer_sync_loop() {
                     None => lasts[buf_idx],
                 };
 
-                val = filters[buf_idx].filter(val);
+                val = filters[buf_idx].run(val);
 
                 buff[*n] = val;
                 lasts[buf_idx] = val;
@@ -81,7 +88,6 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
                 break;
             }
         }
-
         thread::sleep(Duration::from_millis(500));
     }
 
