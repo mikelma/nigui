@@ -1,6 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use std::time::Instant;
+
 use chrono::prelude::*;
+use eframe::egui::Key;
 use eframe::{egui, epi};
 
 use super::wave;
@@ -11,6 +14,9 @@ pub struct MyApp {
     recording: bool,
     mark_str: String,
     add_str: String,
+    test_mode: bool,
+    noise_mode: bool,
+    timer: Instant,
 }
 
 impl Default for MyApp {
@@ -19,6 +25,9 @@ impl Default for MyApp {
             recording: false,
             mark_str: String::from("1"),
             add_str: String::from("172.16.30.150"),
+            test_mode: false,
+            noise_mode: false,
+            timer: Instant::now(),
         }
     }
 }
@@ -70,7 +79,6 @@ impl epi::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.ctx().request_repaint();
 
-
             /*
             let shorcut = egui::KeyboardShorcut::new(egui::Modifiers::CTRL, Key::);
             if ctx.input(|i| i.consume_shorcut()) {
@@ -78,13 +86,13 @@ impl epi::App for MyApp {
             }
              */
 
-            /*
-            ctx.input(|i| {
-                if i.key_pressed(egui::Key::Num2) {
+            let keys = &[Key::Q, Key::W, Key::E, Key::R, Key::T, Key::Y];
+            for (i, k) in keys.iter().enumerate() {
+                if ctx.input().key_pressed(*k) {
+                    println!("Sending mark...🦝 value={}", i+1);
+                    send_tcp_command(0x33, &[(i+1) as u8]).unwrap();
                 }
-            });*/
-
-
+            }
             ui.heading("NiGUI: Neural data visualization tool");
 
             ui.horizontal(|ui| {
@@ -109,8 +117,44 @@ impl epi::App for MyApp {
                     let m: u8 = self.mark_str.parse().unwrap(); // TODO: Handle the error better
                     send_tcp_command(0x33, &[m]).unwrap();
                 }
-            });
 
+                ui.label(" (use QWERTY to send marks 1-6)");
+
+                ui.separator();
+                let mut test_button = egui::Button::new("Test");
+                if self.test_mode {
+                    test_button = test_button.fill(egui::Color32::DARK_GREEN);
+                }
+                if ui.add(test_button).clicked() {
+                    self.test_mode = !self.test_mode;
+                    if self.test_mode {
+                        send_tcp_command(0x77, &[1]).unwrap(); // test ON
+                    } else {
+                        send_tcp_command(0xaa, &[1]).unwrap(); // test OFF
+                    }
+                }
+
+                // Noise measurement
+                let mut noise_button = egui::Button::new("Measure noise");
+                if self.noise_mode {
+                    noise_button = noise_button.fill(egui::Color32::DARK_GREEN);
+                }
+
+                if ui.add(noise_button).clicked() {
+                    self.noise_mode = !self.noise_mode;
+                    if self.noise_mode {
+                        send_tcp_command(0x66, &[1]).unwrap();
+                    } else {
+                        send_tcp_command(0xaa, &[1]).unwrap();
+                    }
+                }
+
+                /*
+                if self.recording && self.timer.elapsed().as_secs() >= 10 {
+                    self.timer = Instant::now();
+                    send_tcp_command
+                }*/
+            });
             ui.separator();
 
             wave::plot_waves(ui);
