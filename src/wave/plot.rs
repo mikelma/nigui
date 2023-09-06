@@ -1,6 +1,6 @@
-use eframe::egui;
+use eframe::egui::{self, Label, Color32};
 use egui::{
-    plot::{Legend, Line, Plot, Values},
+    plot::{Legend, Line, Plot, Values, Value},
     Vec2,
 };
 
@@ -21,6 +21,8 @@ pub fn plot_waves(ui: &mut egui::Ui) {
 
     let legend = Legend::default();
 
+    let colors = vec![Color32::RED, Color32::GREEN, Color32::LIGHT_BLUE, Color32::YELLOW];
+    let mut idx = 0;
     for (fft_buff, (_, wave_buff)) in fft_buffs.iter().zip(wave_buffs.iter()) {
         ui.allocate_ui(space, |ui| {
             ui.columns(2, |columns| {
@@ -34,20 +36,43 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                         .map(|v| *v)
                         .collect::<Vec<f32>>()
                         .as_slice(),
-                ));
-                let fft_line = Line::new(Values::from_ys_f32(fft_buff));
+                )).color(colors[idx]);
 
-                Plot::new("Raw wave")
-                    .allow_drag(false)
-                    .allow_zoom(false)
+                let num_bins = WAVE_BUFF_LEN as f32 / 2.0;
+                let nyquist = SAMPLING_RATE as f32 / 2.0;
+                let bin_size = nyquist / num_bins;
+                let fft_values: Vec<Value> = fft_buff.iter()
+                    .enumerate()
+                    .map(|(i, v)| Value::new((i as f32)*bin_size, *v))
+                    .take_while(|v| v.x <= 60.0)
+                    .collect();
+                let fft_line = Line::new(Values::from_values(fft_values));
+
+                if idx == colors.len()-1 {
+                    idx = 0;
+                } else {
+                    idx += 1;
+                }
+
+                columns[0].horizontal_top(|mut ui| {
+                    ui.vertical(|ui| {
+                        ui.label("Kaixo");
+                    });
+
+                    Plot::new("Raw wave")
+                        .allow_drag(false)
+                        .allow_zoom(false)
                     // .include_y(1)
                     // .center_y_axis(true)
-                    .legend(legend)
-                    .show(&mut columns[0], |plot_ui| plot_ui.line(raw_line));
+                        .legend(legend)
+                        .show_axes([false, false])
+                        .show(&mut ui, |plot_ui| plot_ui.line(raw_line));
+                });
 
                 Plot::new("FFT")
                     .allow_drag(false)
                     .allow_zoom(false)
+                    .show_y(false)
                     // .include_y(1024)
                     // .center_y_axis(true)
                     .show(&mut columns[1], |plot_ui| plot_ui.line(fft_line));
