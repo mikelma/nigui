@@ -75,7 +75,11 @@ fn buffer_sync_loop() {
             }
         }
         let elapsed_time = now.elapsed();
-        thread::sleep(wait - elapsed_time);
+        if elapsed_time < wait {
+            thread::sleep(wait - elapsed_time);
+        } else {
+            eprintln!("⚠️ WARNING! Buffer out of sync");
+        }
     }
 }
 
