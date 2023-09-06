@@ -16,7 +16,7 @@ pub const WAVE_BUFF_LEN: usize = 2048;
 /// Number of waves to track
 pub const WAVE_BUFFS_NUM: usize = 4;
 /// Sampling rate of the NAPSE board
-pub const SAMPLING_RATE: usize = 500;
+pub const SAMPLING_RATE: u32 = 250;
 
 lazy_static! {
     /// This list contains the (circular) buffers that store the wave data.
