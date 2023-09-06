@@ -1,6 +1,6 @@
-use eframe::egui::{self, Label, Color32};
+use eframe::egui::{self, Color32, Label, plot::PlotPoint};
 use egui::{
-    plot::{Legend, Line, Plot, Values, Value},
+    plot::{Legend, Line, Plot, PlotPoints},
     Vec2,
 };
 
@@ -19,16 +19,19 @@ pub fn plot_waves(ui: &mut egui::Ui) {
     let fft_buffs = FFT_BUFFS.read().unwrap();
     let wave_buffs = WAVE_BUFFS.read().unwrap();
 
-    let legend = Legend::default();
-
-    let colors = vec![Color32::RED, Color32::GREEN, Color32::LIGHT_BLUE, Color32::YELLOW];
+    let colors = vec![
+        Color32::RED,
+        Color32::GREEN,
+        Color32::LIGHT_BLUE,
+        Color32::YELLOW,
+    ];
     let mut idx = 0;
     for (fft_buff, (_, wave_buff)) in fft_buffs.iter().zip(wave_buffs.iter()) {
         ui.allocate_ui(space, |ui| {
             ui.columns(2, |columns| {
                 // convert numeric data (`f32`) to egui's `Value` struct in order to
                 // generate the plots
-                let raw_line = Line::new(Values::from_ys_f32(
+                let raw_line = Line::new(PlotPoints::from_ys_f32(
                     // reverse buffer
                     wave_buff
                         .iter()
@@ -36,19 +39,21 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                         .map(|v| *v)
                         .collect::<Vec<f32>>()
                         .as_slice(),
-                )).color(colors[idx]);
+                ))
+                .color(colors[idx]);
 
-                let num_bins = WAVE_BUFF_LEN as f32 / 2.0;
-                let nyquist = SAMPLING_RATE as f32 / 2.0;
+                let num_bins = WAVE_BUFF_LEN as f64 / 2.0;
+                let nyquist = SAMPLING_RATE as f64 / 2.0;
                 let bin_size = nyquist / num_bins;
-                let fft_values: Vec<Value> = fft_buff.iter()
+                let fft_values: Vec<[f64; 2]> = fft_buff
+                    .iter()
                     .enumerate()
-                    .map(|(i, v)| Value::new((i as f32)*bin_size, *v))
-                    .take_while(|v| v.x <= 60.0)
+                    .map(|(i, v)| [(i as f64) * bin_size, *v as f64])
+                    .take_while(|v| v[0] <= 60.0)
                     .collect();
-                let fft_line = Line::new(Values::from_values(fft_values));
+                let fft_line = Line::new(PlotPoints::new(fft_values));
 
-                if idx == colors.len()-1 {
+                if idx == colors.len() - 1 {
                     idx = 0;
                 } else {
                     idx += 1;
@@ -58,12 +63,13 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                     ui.vertical(|ui| {
                         ui.label("Kaixo");
                     });
+                    let legend = Legend::default();
 
                     Plot::new("Raw wave")
                         .allow_drag(false)
                         .allow_zoom(false)
-                    // .include_y(1)
-                    // .center_y_axis(true)
+                        // .include_y(1)
+                        // .center_y_axis(true)
                         .legend(legend)
                         .show_axes([false, false])
                         .show(&mut ui, |plot_ui| plot_ui.line(raw_line));

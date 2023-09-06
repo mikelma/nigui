@@ -3,8 +3,8 @@
 use std::time::Instant;
 
 use chrono::prelude::*;
+use eframe::egui;
 use eframe::egui::Key;
-use eframe::{egui, epi};
 
 use super::wave;
 use super::wifi::{send_tcp_command, NAPSE_ADDR};
@@ -33,6 +33,14 @@ impl Default for MyApp {
 }
 
 impl MyApp {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
+        // Restore app state using cc.storage (requires the "persistence" feature).
+        // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
+        // for e.g. egui::PaintCallback.
+        Self::default()
+    }
+
     fn record_button(&mut self, ui: &mut egui::Ui) {
         let text = if self.recording {
             "Stop recording"
@@ -56,7 +64,8 @@ impl MyApp {
             if self.recording {
                 let mut buffs = crate::wave::RECORDING_BUFFS.write().unwrap();
                 buffs.clear();
-                for _ in 0..(WAVE_BUFFS_NUM+1) {  // create an extra buffer for the marks
+                for _ in 0..(WAVE_BUFFS_NUM + 1) {
+                    // create an extra buffer for the marks
                     buffs.push(vec![]);
                 }
             } else {
@@ -70,27 +79,16 @@ impl MyApp {
     }
 }
 
-impl epi::App for MyApp {
-    fn name(&self) -> &str {
-        "NIGUI"
-    }
-
-    fn update(&mut self, ctx: &egui::CtxRef, frame: &epi::Frame) {
+impl eframe::App for MyApp {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.ctx().request_repaint();
 
-            /*
-            let shorcut = egui::KeyboardShorcut::new(egui::Modifiers::CTRL, Key::);
-            if ctx.input(|i| i.consume_shorcut()) {
-                self.text.push_str("\nPressed");
-            }
-             */
-
             let keys = &[Key::Q, Key::W, Key::E, Key::R, Key::T, Key::Y];
             for (i, k) in keys.iter().enumerate() {
-                if ctx.input().key_pressed(*k) {
-                    println!("Sending mark...🦝 value={}", i+1);
-                    send_tcp_command(0x33, &[(i+1) as u8]).unwrap();
+                if ctx.input(|i| i.key_pressed(*k)) {
+                    println!("Sending mark...🦝 value={}", i + 1);
+                    send_tcp_command(0x33, &[(i + 1) as u8]).unwrap();
                 }
             }
             ui.heading("NiGUI: Neural data visualization tool");
@@ -171,7 +169,7 @@ fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
 
     let mut out = File::create(fname).unwrap();
     let num_bufs = bufs.len();
-    for i in 0..num_bufs-1 {
+    for i in 0..num_bufs - 1 {
         write!(out, "channel-{},", i).unwrap();
     }
     write!(out, "mark").unwrap();
@@ -179,7 +177,7 @@ fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
     write!(out, "\n").unwrap();
     for j in 0..bufs[0].len() {
         // for each data point
-        for i in 0..num_bufs-1 {
+        for i in 0..num_bufs - 1 {
             // for each channel
             write!(out, "{},", bufs[i][j]).unwrap();
         }

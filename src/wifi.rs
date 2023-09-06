@@ -1,4 +1,5 @@
 use crate::wave::*;
+use biquad::*;
 use std::error::Error;
 use std::fmt;
 use std::io::prelude::*;
@@ -6,11 +7,9 @@ use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::sync::RwLock;
 use std::thread;
 use std::time::{Duration, Instant};
-use biquad::*;
 
 lazy_static! {
     pub static ref NAPSE_ADDR: RwLock<Option<String>> = RwLock::new(None);
-
     pub static ref PRE_BUFFS: RwLock<Vec<Vec<f32>>> = {
         let buf = vec![vec![]; WAVE_BUFFS_NUM];
         RwLock::new(buf)
@@ -46,7 +45,8 @@ fn buffer_sync_loop() {
     let fs = SAMPLING_RATE.hz();
 
     // Create coefficients for the biquads
-    let coeffs = Coefficients::<f32>::from_params(Type::LowPass, fs, f0, Q_BUTTERWORTH_F32).unwrap();
+    let coeffs =
+        Coefficients::<f32>::from_params(Type::LowPass, fs, f0, Q_BUTTERWORTH_F32).unwrap();
 
     // Initialize one filter for each channel
     let mut filters = vec![];
@@ -152,7 +152,7 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
                         let mut rec_buf = RECORDING_BUFFS.write().unwrap();
                         rec_buf[buf_idx].push(val);
 
-                        if buf_idx == WAVE_BUFFS_NUM-1 {
+                        if buf_idx == WAVE_BUFFS_NUM - 1 {
                             let mark = buf[40];
                             rec_buf[WAVE_BUFFS_NUM].push(mark as f32);
                         }

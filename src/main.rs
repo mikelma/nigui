@@ -17,6 +17,10 @@ fn main() {
     });
 
     // execute GUI
-    let options = eframe::NativeOptions::default();
-    eframe::run_native(Box::new(MyApp::default()), options);
+    let native_options = eframe::NativeOptions::default();
+    eframe::run_native(
+        "NiGUI",
+        native_options,
+        Box::new(|cc| Box::new(MyApp::new(cc))),
+    );
 }
