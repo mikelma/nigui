@@ -1,6 +1,6 @@
 use eframe::egui::{self, Color32, Label, plot::{PlotPoint, BarChart, Bar}, RichText};
 use egui::{
-    plot::{Legend, Line, Plot, PlotPoints},
+    plot::{Legend, Line, Plot, PlotPoints, Text},
     Vec2,
 };
 
@@ -65,6 +65,14 @@ pub fn plot_waves(ui: &mut egui::Ui) {
 
                 let fft_barchart = BarChart::new(fft_bars).color(colors[color_idx]);
 
+                let band_bars = [("theta", theta_mag), ("alpha", alpha_mag), ("beta", beta_mag)].iter()
+                    .enumerate()
+                    .map(|(i, (name, v))| Bar::new(i as f64, *v).name(name))
+                    .collect::<Vec<Bar>>();
+                let bands_barchart = BarChart::new(band_bars)
+                    .color(colors[color_idx])
+                    .width(1.0);
+
                 if color_idx == colors.len() - 1 {
                     color_idx = 0;
                 } else {
@@ -76,9 +84,9 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                         // Channel label
                         let text = RichText::new(format!("CH-{}", idx+1)).strong();
                         ui.label(text);
+                        ui.label(format!("theta: {:.2}%", theta_mag));
                         ui.label(format!("alpha: {:.2}%", alpha_mag));
                         ui.label(format!("beta: {:.2}%", beta_mag));
-                        ui.label(format!("theta: {:.2}%", theta_mag));
                     });
 
                     let legend = Legend::default();
@@ -93,13 +101,33 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                         .show(&mut ui, |plot_ui| plot_ui.line(raw_line));
                 });
 
-                Plot::new(format!("FFT {idx}"))
-                    .allow_drag(false)
-                    .allow_zoom(false)
-                    .show_y(false)
-                    // .include_y(1024)
-                    // .center_y_axis(true)
-                    .show(&mut columns[1], |plot_ui| plot_ui.bar_chart(fft_barchart));
+                columns[1].horizontal_top(|mut ui| {
+                    let max_width = ui.max_rect().width() - 10.0;
+                    Plot::new(format!("FFT {idx}"))
+                        .allow_drag(false)
+                        .allow_zoom(false)
+                        .show_y(false)
+                        .width(0.7 * max_width)
+                        .show(&mut ui, |plot_ui| plot_ui.bar_chart(fft_barchart));
+
+                    Plot::new(format!("Frequency bands {idx}"))
+                        .allow_drag(false)
+                        .allow_zoom(false)
+                        .show_y(true)
+                        .show_x(false)
+                        .include_y(20.0)
+                        .show_axes([false, false])
+                        .width(0.3 * max_width)
+                        .show(&mut ui, |plot_ui|
+                              {
+                                  plot_ui.bar_chart(bands_barchart);
+                                  for (i, &label) in ["theta", "alpha", "beta"].iter().enumerate() {
+                                      let text = Text::new(PlotPoint::new(i as f64, 0.), label)
+                                          .color(Color32::WHITE);
+                                      plot_ui.text(text);
+                                  }
+                              });
+                });
             });
         });
         idx += 1;
