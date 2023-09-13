@@ -57,6 +57,12 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                          })
                     .take_while(|v| v.argument <= 60.0)
                     .collect();
+
+                // Calculate the frequency bands
+                let alpha_mag = frequency_band(&fft_bars, 8.0, 12.0);
+                let theta_mag = frequency_band(&fft_bars, 5.0, 7.0);
+                let beta_mag = frequency_band(&fft_bars, 13.0, 20.0);
+
                 let fft_barchart = BarChart::new(fft_bars).color(colors[color_idx]);
 
                 if color_idx == colors.len() - 1 {
@@ -70,6 +76,9 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                         // Channel label
                         let text = RichText::new(format!("CH-{}", idx+1)).strong();
                         ui.label(text);
+                        ui.label(format!("alpha: {:.2}%", alpha_mag));
+                        ui.label(format!("beta: {:.2}%", beta_mag));
+                        ui.label(format!("theta: {:.2}%", theta_mag));
                     });
 
                     let legend = Legend::default();
@@ -95,4 +104,15 @@ pub fn plot_waves(ui: &mut egui::Ui) {
         });
         idx += 1;
     }
+}
+
+/// Compute the magnitude of a frequency band (bounds included) normalized (percentage) w.r.t the sum of the magnitudes of the FFT.
+fn frequency_band(fft: &Vec<Bar>, start: f64, end: f64) -> f64 {
+    let fft_mag_sum = fft.iter().map(|v| v.value).sum::<f64>();
+    let band_sum =
+        fft.iter()
+        .filter(|v| v.argument >= start && v.argument <= end)
+        .map(|v| v.value)
+        .sum::<f64>();
+    100.0 * band_sum / fft_mag_sum
 }
