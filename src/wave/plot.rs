@@ -27,7 +27,7 @@ pub fn plot_waves(ui: &mut egui::Ui) {
     ];
     let mut color_idx = 0;
     let mut idx = 0;
-    for (fft_buff, (_, wave_buff)) in fft_buffs.iter().zip(wave_buffs.iter()) {
+    for (fft_buff, wave_buff) in fft_buffs.iter().zip(wave_buffs.iter()) {
         ui.allocate_ui(space, |ui| {
             ui.columns(2, |columns| {
                 // convert numeric data (`f32`) to egui's `Value` struct in order to
@@ -36,7 +36,6 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                     // reverse buffer
                     wave_buff
                         .iter()
-                        .rev()
                         .map(|v| *v)
                         .collect::<Vec<f32>>()
                         .as_slice(),

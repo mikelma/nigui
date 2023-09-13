@@ -38,7 +38,7 @@ fn buffer_sync_loop() {
     let wait_time = 1.0 / SAMPLING_RATE as f64;
     let wait = Duration::from_secs_f64(wait_time);
     let mut lasts = vec![0.0; WAVE_BUFFS_NUM];
-    let mut val = 0.0;
+    let mut val;
 
     // Cutoff and sampling frequencies
     let f0 = 40.hz();
@@ -59,7 +59,7 @@ fn buffer_sync_loop() {
         {
             let mut pre_buf = PRE_BUFFS.write().unwrap();
             let mut wave_buf = WAVE_BUFFS.write().unwrap();
-            for (buf_idx, (n, buff)) in wave_buf.iter_mut().enumerate() {
+            for (buf_idx, buff) in wave_buf.iter_mut().enumerate() {
                 val = match pre_buf[buf_idx].pop() {
                     Some(v) => v,
                     None => lasts[buf_idx],
@@ -67,11 +67,17 @@ fn buffer_sync_loop() {
 
                 val = filters[buf_idx].run(val);
 
-                buff[*n] = val;
+                // Update the buffer
+                for i in 0..(WAVE_BUFF_LEN-1) {
+                    buff[i] = buff[i+1];
+                }
+                buff[WAVE_BUFF_LEN-1] = val;
+
+                // store the current value as the last value
                 lasts[buf_idx] = val;
 
                 // Update the pointer
-                *n = if *n == WAVE_BUFF_LEN - 1 { 0 } else { *n + 1 };
+                // *n = if *n == WAVE_BUFF_LEN - 1 { 0 } else { *n + 1 };
             }
         }
         let elapsed_time = now.elapsed();

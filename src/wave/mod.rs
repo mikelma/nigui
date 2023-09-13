@@ -11,8 +11,8 @@ pub use plot::plot_waves;
 /// The number of wave points to store. Buffers are circular,
 /// hence, once the limit of the buffer is reached, data points get
 /// overwriten with the new data (starting from the oldest data point).
-// pub const WAVE_BUFF_LEN: usize = 1024;
-pub const WAVE_BUFF_LEN: usize = 2048;
+pub const WAVE_BUFF_LEN: usize = 1024;
+// pub const WAVE_BUFF_LEN: usize = 2048;
 /// Number of waves to track
 pub const WAVE_BUFFS_NUM: usize = 4;
 /// Sampling rate of the NAPSE board
@@ -20,12 +20,9 @@ pub const SAMPLING_RATE: u32 = 250;
 
 lazy_static! {
     /// This list contains the (circular) buffers that store the wave data.
-    /// Each element of the list corresponds to one EEG wave. Then, each wave
-    /// is stored in a circular buffer: a list of `f32` that stores the data,
-    /// and an `usize` that refers to the index of the element to replace in
-    /// the circular buffer.
-    pub static ref WAVE_BUFFS : RwLock<[(usize, [f32; WAVE_BUFF_LEN]); WAVE_BUFFS_NUM]> = {
-        let values = [(0, [0f32; WAVE_BUFF_LEN]); WAVE_BUFFS_NUM];
+    /// Each element of the list corresponds to one EEG wave.
+    pub static ref WAVE_BUFFS : RwLock<[[f32; WAVE_BUFF_LEN]; WAVE_BUFFS_NUM]> = {
+        let values = [[0f32; WAVE_BUFF_LEN]; WAVE_BUFFS_NUM];
         RwLock::new(values)
     };
 
