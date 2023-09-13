@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, Label, plot::{PlotPoint, BarChart, Bar}};
+use eframe::egui::{self, Color32, Label, plot::{PlotPoint, BarChart, Bar}, RichText};
 use egui::{
     plot::{Legend, Line, Plot, PlotPoints},
     Vec2,
@@ -67,8 +67,11 @@ pub fn plot_waves(ui: &mut egui::Ui) {
 
                 columns[0].horizontal_top(|mut ui| {
                     ui.vertical(|ui| {
-                        ui.label("Kaixo");
+                        // Channel label
+                        let text = RichText::new(format!("CH-{}", idx+1)).strong();
+                        ui.label(text);
                     });
+
                     let legend = Legend::default();
 
                     Plot::new(format!("Raw wave {idx}"))
