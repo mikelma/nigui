@@ -1,7 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::time::Instant;
-
 use chrono::prelude::*;
 use eframe::egui;
 use eframe::egui::Key;
@@ -16,7 +14,6 @@ pub struct MyApp {
     add_str: String,
     test_mode: bool,
     noise_mode: bool,
-    timer: Instant,
 }
 
 impl Default for MyApp {
@@ -27,13 +24,12 @@ impl Default for MyApp {
             add_str: String::from("172.16.30.150"),
             test_mode: false,
             noise_mode: false,
-            timer: Instant::now(),
         }
     }
 }
 
 impl MyApp {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
         // Restore app state using cc.storage (requires the "persistence" feature).
         // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
@@ -96,7 +92,7 @@ impl eframe::App for MyApp {
             ui.horizontal(|ui| {
                 ui.label("Napse address: ");
                 ui.add(egui::TextEdit::singleline(&mut self.add_str).desired_width(100.0));
-                if ui.add(egui::Button::new("Play")).clicked() {
+                if ui.add(egui::Button::new("Connect ⏩")).clicked() {
                     *NAPSE_ADDR.write().unwrap() = Some(self.add_str.clone());
                 }
             });

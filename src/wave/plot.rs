@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, Label, plot::{PlotPoint, BarChart, Bar}, RichText};
+use eframe::egui::{self, Color32, plot::{PlotPoint, BarChart, Bar}, RichText};
 use egui::{
     plot::{Legend, Line, Plot, PlotPoints, Text},
     Vec2,

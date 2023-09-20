@@ -7,4 +7,3 @@ mod app;
 pub mod wave;
 pub mod wifi;
 pub use app::MyApp;
-mod filter_coefs;

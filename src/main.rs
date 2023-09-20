@@ -22,5 +22,5 @@ fn main() {
         "NiGUI",
         native_options,
         Box::new(|cc| Box::new(MyApp::new(cc))),
-    );
+    ).expect("Failed to initialize egui GUI");
 }
