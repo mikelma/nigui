@@ -7,6 +7,7 @@ use eframe::egui::Key;
 use super::wave;
 use super::wifi::{send_tcp_command, NAPSE_ADDR};
 use crate::wave::WAVE_BUFFS_NUM;
+use crate::wifi::ERRORS;
 
 pub struct MyApp {
     recording: bool,
@@ -172,10 +173,18 @@ impl eframe::App for MyApp {
             ui.separator();
 
             wave::plot_waves(ui);
+            let n_errs = ERRORS.read().unwrap().len();
+            ui.label("Errors: ");
+            if n_errs > 0 {
+                {
+                    let last = ERRORS.read().unwrap()[0].clone();
+                    ui.label(last);
+                }
+            }
         });
 
         // resize the native window to be just the size we need it to be
-        frame.set_window_size(ctx.used_size());
+        // frame.set_window_size(ctx.used_size());
     }
 }
 

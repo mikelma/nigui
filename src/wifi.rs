@@ -10,10 +10,13 @@ use std::time::{Duration, Instant};
 
 lazy_static! {
     pub static ref NAPSE_ADDR: RwLock<Option<String>> = RwLock::new(None);
+
     pub static ref PRE_BUFFS: RwLock<Vec<Vec<f32>>> = {
         let buf = vec![vec![]; WAVE_BUFFS_NUM];
         RwLock::new(buf)
     };
+
+    pub static ref ERRORS: RwLock<Vec<String>> = RwLock::new(vec![]);
 }
 
 #[derive(Debug)]
@@ -32,6 +35,10 @@ pub fn send_tcp_command(cmd: u8, payload: &[u8]) -> Result<(), Box<dyn Error>> {
     });
 
     Ok(())
+}
+
+pub fn log_err(msg: String) {
+    ERRORS.write().unwrap().push(msg);
 }
 
 fn buffer_sync_loop() {
@@ -140,6 +147,8 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         if data.len() != 11 {
             return Err(Box::new(NapseError::FailedToReadAllChannels));
         }
+
+        let _imp_data = data[1];
 
         let channel_data = [
             to_float(data[2]),
