@@ -14,6 +14,7 @@ pub struct MyApp {
     add_str: String,
     test_mode: bool,
     noise_mode: bool,
+    impedance_mode: bool,
 }
 
 impl Default for MyApp {
@@ -24,6 +25,7 @@ impl Default for MyApp {
             add_str: String::from("172.16.30.150"),
             test_mode: false,
             noise_mode: false,
+            impedance_mode: false,
         }
     }
 }
@@ -115,11 +117,12 @@ impl eframe::App for MyApp {
                 ui.label(" (use QWERTY to send marks 1-6)");
 
                 ui.separator();
+                ui.label("Modes: ");
                 let mut test_button = egui::Button::new("Test");
                 if self.test_mode {
                     test_button = test_button.fill(egui::Color32::DARK_GREEN);
                 }
-                if ui.add(test_button).clicked() {
+                if ui.add(test_button).clicked() && !self.impedance_mode && !self.noise_mode {
                     self.test_mode = !self.test_mode;
                     if self.test_mode {
                         send_tcp_command(0x77, &[1]).unwrap(); // test ON
@@ -129,17 +132,34 @@ impl eframe::App for MyApp {
                 }
 
                 // Noise measurement
-                let mut noise_button = egui::Button::new("Measure noise");
+                let mut noise_button = egui::Button::new("Noise");
                 if self.noise_mode {
                     noise_button = noise_button.fill(egui::Color32::DARK_GREEN);
                 }
 
-                if ui.add(noise_button).clicked() {
+                if ui.add(noise_button).clicked() && !self.test_mode && !self.impedance_mode {
                     self.noise_mode = !self.noise_mode;
                     if self.noise_mode {
                         send_tcp_command(0x66, &[1]).unwrap();
                     } else {
                         send_tcp_command(0xaa, &[1]).unwrap();
+                    }
+                }
+
+                // Impedance button
+                let mut imp_button = egui::Button::new("Impedance");
+                if self.impedance_mode {
+                    imp_button = imp_button.fill(egui::Color32::DARK_GREEN);
+                }
+
+                if ui.add(imp_button).clicked() && !self.noise_mode && !self.test_mode {
+                    self.impedance_mode = !self.impedance_mode;
+                    if self.impedance_mode {
+                        // TODO
+                        // send_tcp_command(0x66, &[1]).unwrap();
+                    } else {
+                        // TODO
+                        // send_tcp_command(0xaa, &[1]).unwrap();
                     }
                 }
 
