@@ -1,4 +1,4 @@
-use eframe::egui::{self, Color32, plot::{PlotPoint, BarChart, Bar}, RichText};
+use eframe::egui::{self, Color32, plot::{PlotPoint, BarChart, Bar}, RichText, Button, Sense};
 use egui::{
     plot::{Legend, Line, Plot, PlotPoints, Text},
     Vec2,
@@ -81,12 +81,23 @@ pub fn plot_waves(ui: &mut egui::Ui) {
 
                 columns[0].horizontal_top(|mut ui| {
                     ui.vertical(|ui| {
-                        // Channel label
-                        let text = RichText::new(format!("CH-{}", idx+1)).strong();
-                        ui.label(text);
+                        ui.horizontal(|ui| {
+                            // Add impedance status block
+                            let sense = Sense::hover();
+                            let imp_stat = Button::new("")
+                                .sense(sense)
+                                .fill(Color32::GREEN); // TODO: Change depending on the real value
+                            ui.add(imp_stat);
+
+                            // Channel label
+                            let text = RichText::new(format!("CH-{}", idx+1)).strong();
+                            ui.label(text);
+                        });
+
                         ui.label(format!("theta: {:.2}%", theta_mag));
                         ui.label(format!("alpha: {:.2}%", alpha_mag));
                         ui.label(format!("beta: {:.2}%", beta_mag));
+
                     });
 
                     let legend = Legend::default();
