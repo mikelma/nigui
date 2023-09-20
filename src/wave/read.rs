@@ -1,5 +1,5 @@
-use rustfft::num_complex::Complex;
 use super::*;
+use rustfft::num_complex::Complex;
 
 /// Generates the FFTs of the wave buffers.
 pub fn fft_gen() {

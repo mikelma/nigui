@@ -68,10 +68,10 @@ fn buffer_sync_loop() {
                 val = filters[buf_idx].run(val);
 
                 // Update the buffer
-                for i in 0..(WAVE_BUFF_LEN-1) {
-                    buff[i] = buff[i+1];
+                for i in 0..(WAVE_BUFF_LEN - 1) {
+                    buff[i] = buff[i + 1];
                 }
-                buff[WAVE_BUFF_LEN-1] = val;
+                buff[WAVE_BUFF_LEN - 1] = val;
 
                 // store the current value as the last value
                 lasts[buf_idx] = val;
