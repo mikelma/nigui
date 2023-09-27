@@ -1,4 +1,4 @@
-use crate::wave::*;
+use crate::{wave::*, log_err};
 use biquad::*;
 use std::error::Error;
 use std::fmt;
@@ -88,7 +88,7 @@ fn buffer_sync_loop() {
         if elapsed_time < wait {
             thread::sleep(wait - elapsed_time);
         } else {
-            eprintln!("⚠️ WARNING! Buffer out of sync");
+            log_err("Buffer out of sync".into());
         }
     }
 }
