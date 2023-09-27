@@ -1,8 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 use chrono::prelude::*;
-use eframe::egui;
+use eframe::egui::{self, RichText};
 use eframe::egui::Key;
+use egui::ColorImage;
 
 use super::wave;
 use super::wifi::{send_tcp_command, NAPSE_ADDR};
@@ -16,6 +17,8 @@ pub struct MyApp {
     test_mode: bool,
     noise_mode: bool,
     impedance_mode: bool,
+
+    logo_tex: Option<egui::TextureHandle>,
 }
 
 impl Default for MyApp {
@@ -27,6 +30,7 @@ impl Default for MyApp {
             test_mode: false,
             noise_mode: false,
             impedance_mode: false,
+            logo_tex: None,
         }
     }
 }
@@ -78,6 +82,18 @@ impl MyApp {
     }
 }
 
+
+fn load_image_from_memory(image_data: &[u8]) -> Result<ColorImage, image::ImageError> {
+    let image = image::load_from_memory(image_data)?;
+    let size = [image.width() as _, image.height() as _];
+    let image_buffer = image.to_rgba8();
+    let pixels = image_buffer.as_flat_samples();
+    Ok(ColorImage::from_rgba_unmultiplied(
+        size,
+        pixels.as_slice(),
+    ))
+}
+
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -90,7 +106,27 @@ impl eframe::App for MyApp {
                     send_tcp_command(0x33, &[(i + 1) as u8]).unwrap();
                 }
             }
-            ui.heading("NiGUI: Neural data visualization tool");
+
+            let texture: &egui::TextureHandle = self.logo_tex.get_or_insert_with(|| {
+                // Load the texture only once.
+                ui.ctx().load_texture(
+                    "logo-img",
+                    load_image_from_memory(include_bytes!("../logo.png")).unwrap(),
+                    Default::default()
+                )
+            });
+
+            ui.horizontal(|ui| {
+                ui.vertical(|ui| {
+                    ui.label(RichText::new("NiGUI").size(20.0).strong());
+                    ui.label(RichText::new("Neural data visualization tool").size(15.0));
+                });
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    ui.image(texture, texture.size_vec2());
+                });
+            });
+            ui.add_space(10.0);
 
             ui.horizontal(|ui| {
                 ui.label("Napse address: ");
