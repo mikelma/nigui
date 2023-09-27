@@ -12,7 +12,7 @@ use super::*;
 pub fn plot_waves(ui: &mut egui::Ui) {
     let space = Vec2::from(&[
         ui.available_width(),
-        (ui.available_height() / WAVE_BUFFS_NUM as f32) - 5.,
+        (ui.available_height() / WAVE_BUFFS_NUM as f32) - 15.,
     ]);
 
     // read the data from the global buffers

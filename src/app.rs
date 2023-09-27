@@ -79,7 +79,7 @@ impl MyApp {
 }
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.ctx().request_repaint();
 
@@ -173,14 +173,21 @@ impl eframe::App for MyApp {
             ui.separator();
 
             wave::plot_waves(ui);
-            let n_errs = ERRORS.read().unwrap().len();
-            ui.label("Errors: ");
-            if n_errs > 0 {
-                {
-                    let last = ERRORS.read().unwrap()[0].clone();
-                    ui.label(last);
+
+            ui.separator();
+            ui.horizontal(|ui| {
+                let n_errs = ERRORS.read().unwrap().len();
+
+                if n_errs > 0 {
+                    ui.label(egui::RichText::new(format!("Messages ({}):", n_errs)).strong());
+                    {
+                        let last = ERRORS.read().unwrap()[0].clone();
+                        ui.label(last);
+                    }
+                } else {
+                    ui.label("Messages: ");
                 }
-            }
+            });
         });
 
         // resize the native window to be just the size we need it to be

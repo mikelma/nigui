@@ -1,4 +1,4 @@
-use gui::{wave, wifi, MyApp};
+use gui::{wave, wifi::{self, NAPSE_ADDR}, MyApp};
 use std::time::Duration;
 // use tokio::runtime::Runtime;
 
@@ -6,7 +6,14 @@ fn main() {
     println!("Starting UI... 🧠🦝🐙🐰");
 
     std::thread::spawn(|| {
-        wifi::read_napse().unwrap(); // read data in a loop
+        loop {
+            if let Err(e) =  wifi::read_napse() { // read data in a loop
+                gui::log_err(e.to_string());
+                *NAPSE_ADDR.write().unwrap() = None;
+            } else {
+                break
+            }
+        }
     });
 
     std::thread::spawn(|| {

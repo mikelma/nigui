@@ -7,3 +7,9 @@ mod app;
 pub mod wave;
 pub mod wifi;
 pub use app::MyApp;
+
+use wifi::ERRORS;
+
+pub fn log_err(msg: String) {
+    ERRORS.write().unwrap().push(msg);
+}

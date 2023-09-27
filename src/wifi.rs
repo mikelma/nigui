@@ -25,20 +25,17 @@ pub enum NapseError {
     FailedToReadAllChannels,
 }
 
-pub fn send_tcp_command(cmd: u8, payload: &[u8]) -> Result<(), Box<dyn Error>> {
+pub fn send_tcp_command(cmd: u8, payload: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
     let pld = payload.to_vec();
     let addr = NAPSE_ADDR.read().unwrap().clone().unwrap();
-    std::thread::spawn(move || {
-        let mut stream = TcpStream::connect(&format!("{}:1337", addr)).unwrap();
-        stream.write(&[&[cmd], pld.as_slice()].concat()).unwrap();
-        stream.shutdown(Shutdown::Both).unwrap();
+    let x = std::thread::spawn(move || -> Result<(), std::io::Error> {
+        let mut stream = TcpStream::connect(&format!("{}:1337", addr))?;
+        stream.write(&[&[cmd], pld.as_slice()].concat())?;
+        stream.shutdown(Shutdown::Both)?;
+        Ok(())
     });
 
-    Ok(())
-}
-
-pub fn log_err(msg: String) {
-    ERRORS.write().unwrap().push(msg);
+    Ok(x.join().unwrap()?)
 }
 
 fn buffer_sync_loop() {
