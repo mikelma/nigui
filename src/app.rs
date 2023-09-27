@@ -56,8 +56,14 @@ impl MyApp {
             button = button.fill(egui::Color32::DARK_RED);
         }
 
+        let is_connected = NAPSE_ADDR.read().unwrap().is_some();
+
         if ui.add(button).clicked() {
-            self.recording = !self.recording;
+            if !self.recording && is_connected {
+                self.recording = true;
+            } else if self.recording {
+                self.recording = false;
+            }
 
             {
                 let mut flag = crate::wave::RECORDING_FLAG.write().unwrap();
