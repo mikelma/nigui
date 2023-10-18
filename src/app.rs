@@ -4,6 +4,7 @@ use chrono::prelude::*;
 use eframe::egui::{self, RichText};
 use eframe::egui::Key;
 use egui::ColorImage;
+use rfd::FileDialog;
 
 use super::wave;
 use super::wifi::{send_tcp_command, NAPSE_ADDR};
@@ -79,10 +80,17 @@ impl MyApp {
                 }
             } else {
                 let buffs = crate::wave::RECORDING_BUFFS.read().unwrap();
-                write_data_to_file(
-                    &format!("recording-{}.csv", Utc::now().to_rfc3339()),
-                    buffs.to_vec(),
-                );
+                let default = format!("recording-{}.csv", Utc::now().to_rfc3339());
+                let file = FileDialog::new()
+                    .set_file_name(&default)
+                    .save_file();
+
+                if let Some(path) = file {
+                    write_data_to_file(
+                        &path.to_string_lossy().to_string(),
+                        buffs.to_vec(),
+                    );
+                }
             }
         }
     }
