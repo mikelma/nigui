@@ -73,8 +73,8 @@ impl MyApp {
             if self.recording {
                 let mut buffs = crate::wave::RECORDING_BUFFS.write().unwrap();
                 buffs.clear();
-                for _ in 0..(WAVE_BUFFS_NUM + 1) {
-                    // create an extra buffer for the marks
+                // push a vec for each column in the CSV
+                for _ in 0..(WAVE_BUFFS_NUM*2 + 1) {
                     buffs.push(vec![]);
                 }
             } else {
@@ -243,9 +243,14 @@ fn write_data_to_file(fname: &str, bufs: Vec<Vec<f32>>) {
 
     let mut out = File::create(fname).unwrap();
     let num_bufs = bufs.len();
-    for i in 0..num_bufs - 1 {
+    for i in 0..WAVE_BUFFS_NUM {
         write!(out, "channel-{},", i).unwrap();
     }
+
+    for i in 0..WAVE_BUFFS_NUM {
+        write!(out, "status ch-{},", i).unwrap();
+    }
+
     write!(out, "mark").unwrap();
 
     write!(out, "\n").unwrap();

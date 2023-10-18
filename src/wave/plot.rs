@@ -4,6 +4,8 @@ use egui::{
     Vec2,
 };
 
+use crate::wifi::CH_STATUS;
+
 use super::*;
 
 /// This function draws the wave and FFT plots. The data used to
@@ -82,11 +84,12 @@ pub fn plot_waves(ui: &mut egui::Ui) {
                 columns[0].horizontal_top(|mut ui| {
                     ui.vertical(|ui| {
                         ui.horizontal(|ui| {
+                            let ch_ok = CH_STATUS.read().unwrap()[idx];
                             // Add impedance status block
                             let sense = Sense::hover();
                             let imp_stat = Button::new("")
                                 .sense(sense)
-                                .fill(Color32::GREEN); // TODO: Change depending on the real value
+                                .fill(if ch_ok { Color32::GREEN } else { Color32::RED });
                             ui.add(imp_stat);
 
                             // Channel label
@@ -153,5 +156,6 @@ fn frequency_band(fft: &Vec<Bar>, start: f64, end: f64) -> f64 {
         .filter(|v| v.argument >= start && v.argument <= end)
         .map(|v| v.value)
         .sum::<f64>();
-    100.0 * band_sum / fft_mag_sum
+    let v = 100.0 * band_sum / fft_mag_sum;
+    if v.is_nan() { 0.0 } else { v }
 }

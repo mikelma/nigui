@@ -16,6 +16,8 @@ lazy_static! {
         RwLock::new(buf)
     };
 
+    pub static ref CH_STATUS: RwLock<[bool; WAVE_BUFFS_NUM]> = RwLock::new([true; WAVE_BUFFS_NUM]);
+
     pub static ref ERRORS: RwLock<Vec<String>> = RwLock::new(vec![]);
 }
 
@@ -107,6 +109,8 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
 
     send_tcp_command(0x55, &[])?; // send start command
 
+    send_tcp_command(0xdd, &[])?; // send impedance ON command
+
     // start buffer synchronization
     thread::spawn(|| {
         buffer_sync_loop();
@@ -119,12 +123,14 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
     println!("Listening...");
 
     let mut time_start = Instant::now();
-    let mut n_pkgs = 0;
+    let mut _n_pkgs = 0;
+    let mut ch_status = vec![false; WAVE_BUFFS_NUM];
     loop {
         let (_amt, _src) = socket.recv_from(&mut buf)?;
 
         let data: Vec<i32> = buf
             .chunks(4)
+            .skip(2)
             .map(|v| i32::from_le_bytes([v[0], v[1], v[2], v[3]]))
             .collect();
 
@@ -141,11 +147,22 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
             2.0 * v - 1.0
         };
 
-        if data.len() != 11 {
+        if data.len() != 9 {
             return Err(Box::new(NapseError::FailedToReadAllChannels));
         }
 
-        let _imp_data = data[1];
+        // get channel status
+        let status_data = u32::from_le_bytes([buf[4], buf[5], buf[6], buf[7]]);
+        for i in 0..WAVE_BUFFS_NUM {
+            let not_stat = (status_data & (1 << 12 + i)) >> (12 + i);
+            ch_status[i] = if not_stat == 1 { false } else { true} ;
+        }
+        {
+            let mut status_array = CH_STATUS.write().unwrap();
+            for i in 0..WAVE_BUFFS_NUM {
+                status_array[i] = ch_status[i];
+            }
+        }
 
         let channel_data = [
             to_float(data[2]),
@@ -167,10 +184,12 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
                     if *record_flag {
                         let mut rec_buf = RECORDING_BUFFS.write().unwrap();
                         rec_buf[buf_idx].push(val);
+                        rec_buf[WAVE_BUFFS_NUM + buf_idx].push(if ch_status[buf_idx] { 1.0 } else { 0.0 });
 
                         if buf_idx == WAVE_BUFFS_NUM - 1 {
                             let mark = buf[40];
-                            rec_buf[WAVE_BUFFS_NUM].push(mark as f32);
+                            let n = rec_buf.len()-1;
+                            rec_buf[n].push(mark as f32);
                         }
                     }
                 }
@@ -183,11 +202,11 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         }
 
         // Package counting
-        n_pkgs += 1;
+        _n_pkgs += 1;
         if time_start.elapsed().as_millis() >= 1000 {
             // println!("*** num packages: {}", n_pkgs);
             time_start = Instant::now();
-            n_pkgs = 0;
+            _n_pkgs = 0;
         }
     }
 }
