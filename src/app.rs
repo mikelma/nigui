@@ -110,12 +110,13 @@ fn load_image_from_memory(image_data: &[u8]) -> Result<ColorImage, image::ImageE
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let connected = NAPSE_ADDR.read().unwrap().is_some();
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.ctx().request_repaint();
 
             let keys = &[Key::Q, Key::W, Key::E, Key::R, Key::T, Key::Y];
             for (i, k) in keys.iter().enumerate() {
-                if ctx.input(|i| i.key_pressed(*k)) {
+                if ctx.input(|i| i.key_pressed(*k)) && connected {
                     println!("Sending mark...🦝 value={}", i + 1);
                     send_tcp_command(0x33, &[(i + 1) as u8]).unwrap();
                 }
@@ -159,7 +160,7 @@ impl eframe::App for MyApp {
                 ui.label("Mark number: ");
                 ui.add(egui::TextEdit::singleline(&mut self.mark_str).desired_width(30.0));
 
-                if ui.add(egui::Button::new("Send mark")).clicked() {
+                if ui.add(egui::Button::new("Send mark")).clicked() && connected {
                     println!("Sending mark...🦝 value={}", self.mark_str);
                     let m: u8 = self.mark_str.parse().unwrap(); // TODO: Handle the error better
                     send_tcp_command(0x33, &[m]).unwrap();
@@ -173,7 +174,7 @@ impl eframe::App for MyApp {
                 if self.test_mode {
                     test_button = test_button.fill(egui::Color32::DARK_GREEN);
                 }
-                if ui.add(test_button).clicked() && !self.impedance_mode && !self.noise_mode {
+                if ui.add(test_button).clicked() && !self.impedance_mode && !self.noise_mode && connected {
                     self.test_mode = !self.test_mode;
                     if self.test_mode {
                         send_tcp_command(0x77, &[1]).unwrap(); // test ON
@@ -188,7 +189,7 @@ impl eframe::App for MyApp {
                     noise_button = noise_button.fill(egui::Color32::DARK_GREEN);
                 }
 
-                if ui.add(noise_button).clicked() && !self.test_mode && !self.impedance_mode {
+                if ui.add(noise_button).clicked() && !self.test_mode && !self.impedance_mode && connected {
                     self.noise_mode = !self.noise_mode;
                     if self.noise_mode {
                         send_tcp_command(0x66, &[1]).unwrap();
@@ -197,13 +198,14 @@ impl eframe::App for MyApp {
                     }
                 }
 
+                /*
                 // Impedance button
                 let mut imp_button = egui::Button::new("Impedance");
                 if self.impedance_mode {
                     imp_button = imp_button.fill(egui::Color32::DARK_GREEN);
                 }
 
-                if ui.add(imp_button).clicked() && !self.noise_mode && !self.test_mode {
+                if ui.add(imp_button).clicked() && !self.noise_mode && !self.test_mode && connected {
                     self.impedance_mode = !self.impedance_mode;
                     if self.impedance_mode {
                         // TODO
@@ -212,7 +214,7 @@ impl eframe::App for MyApp {
                         // TODO
                         // send_tcp_command(0xaa, &[1]).unwrap();
                     }
-                }
+                }*/
 
                 /*
                 if self.recording && self.timer.elapsed().as_secs() >= 10 {
