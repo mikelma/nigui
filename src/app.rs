@@ -137,7 +137,7 @@ impl eframe::App for MyApp {
                 });
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                    ui.image(texture, texture.size_vec2());
+                    ui.image(texture);
                 });
             });
             ui.add_space(10.0);

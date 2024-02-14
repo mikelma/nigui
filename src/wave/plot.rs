@@ -1,8 +1,5 @@
-use eframe::egui::{self, Color32, plot::{PlotPoint, BarChart, Bar}, RichText, Button, Sense};
-use egui::{
-    plot::{Legend, Line, Plot, PlotPoints, Text},
-    Vec2,
-};
+use eframe::egui::{self, Color32, RichText, Button, Sense, Vec2};
+use egui_plot::{PlotPoint, BarChart, Bar, Legend, Line, Plot, PlotPoints, Text};
 
 use crate::wifi::CH_STATUS;
 
