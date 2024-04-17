@@ -9,7 +9,7 @@ use rfd::FileDialog;
 use super::wave;
 use super::wifi::{send_tcp_command, NAPSE_ADDR};
 use crate::wave::WAVE_BUFFS_NUM;
-use crate::wifi::ERRORS;
+use crate::wifi::{ERRORS, MARKER_ADDR};
 
 pub struct MyApp {
     recording: bool,
@@ -18,6 +18,8 @@ pub struct MyApp {
     test_mode: bool,
     noise_mode: bool,
     impedance_mode: bool,
+    marker_addr: String,
+    marker_connected: bool,
 
     logo_tex: Option<egui::TextureHandle>,
 }
@@ -32,6 +34,8 @@ impl Default for MyApp {
             noise_mode: false,
             impedance_mode: false,
             logo_tex: None,
+            marker_addr: String::from("127.0.0.1:20001"),
+            marker_connected: false,
         }
     }
 }
@@ -148,6 +152,24 @@ impl eframe::App for MyApp {
                 ui.add(egui::TextEdit::singleline(&mut self.add_str).desired_width(100.0));
                 if ui.add(egui::Button::new("Connect ⏩")).clicked() {
                     *NAPSE_ADDR.write().unwrap() = Some(self.add_str.clone());
+                }
+            });
+            ui.horizontal(|ui| {
+                ui.label("Marker addr: ");
+                let text_edit = egui::TextEdit::singleline(&mut self.marker_addr)
+                    .desired_width(100.0)
+                    .hint_text("addr:port");
+                ui.add(text_edit);
+
+                let text = if !self.marker_connected { "Enable" } else { "Disable" };
+
+                if ui.add(egui::Button::new(text).selected(self.marker_connected)).clicked() {
+                    if !self.marker_connected {
+                        *MARKER_ADDR.write().unwrap() = Some(self.marker_addr.clone());
+                    } else {
+                        *MARKER_ADDR.write().unwrap() = None;
+                    }
+                    self.marker_connected = !self.marker_connected;
                 }
             });
 

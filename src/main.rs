@@ -17,6 +17,10 @@ fn main() {
     });
 
     std::thread::spawn(|| {
+        wifi::marker_server();
+    });
+
+    std::thread::spawn(|| {
         loop {
             wave::read::fft_gen(); // generate the FFTs of the waves that we have just read
             std::thread::sleep(Duration::from_millis(100));

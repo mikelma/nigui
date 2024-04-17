@@ -11,6 +11,8 @@ use std::time::{Duration, Instant};
 lazy_static! {
     pub static ref NAPSE_ADDR: RwLock<Option<String>> = RwLock::new(None);
 
+    pub static ref MARKER_ADDR: RwLock<Option<String>> = RwLock::new(None);
+
     pub static ref PRE_BUFFS: RwLock<Vec<Vec<f32>>> = {
         let buf = vec![vec![]; WAVE_BUFFS_NUM];
         RwLock::new(buf)
@@ -25,6 +27,35 @@ lazy_static! {
 pub enum NapseError {
     DeviceNotFound,
     FailedToReadAllChannels,
+}
+
+
+pub fn marker_server() {
+    let mut buf = [0u8; 1];
+    loop {
+        let addr_optn = {
+            MARKER_ADDR.read().unwrap().clone()
+        };
+
+        if let Some(ref addr) = addr_optn {
+            println!("Starting UDP server @ {}", addr);
+            match UdpSocket::bind(addr) {
+                Ok(socket) => {
+                    loop {
+                        let _ = socket.recv(&mut buf).unwrap();
+                        println!("* Received mark from UDP: {}", &buf[0]);
+                        send_tcp_command(0x33, &[buf[0]]).unwrap();
+                    }
+                },
+                Err(e) => {
+                    eprintln!("Cannot connect bind to {}: {}", addr, e);
+                    *MARKER_ADDR.write().unwrap() = None;
+                    continue;
+                },
+            };
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
 }
 
 pub fn send_tcp_command(cmd: u8, payload: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
@@ -165,10 +196,10 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
         }
 
         let channel_data = [
+            to_float(data[0]),
+            to_float(data[1]),
             to_float(data[2]),
             to_float(data[3]),
-            to_float(data[4]),
-            to_float(data[5]),
         ];
 
         // Write the readed data to the wave buffers
