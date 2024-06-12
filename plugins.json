@@ -1,0 +1,24 @@
+{
+    "venv": "/home/mikel/.venvs/ml/bin/python",
+    "plugins": [
+        {
+            "name": "alpha detect",
+            "help": "Plot alpha wave frequency.",
+            "path": "scripts/alpha_detect.py",
+            "args": {
+                "--path": "$path",
+                "--channel": "0",
+                "--min-freq": "5",
+                "--max-freq": "40"
+            }
+        },
+        {
+            "name": "theta detect",
+            "help": "This is a test.",
+            "path": "scripts/theta_detect.py",
+            "args": {
+                "--value": "int"
+            }
+        }
+    ]
+}

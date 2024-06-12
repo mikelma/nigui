@@ -14,7 +14,7 @@ pub use plot::plot_waves;
 pub const WAVE_BUFF_LEN: usize = 1024;
 // pub const WAVE_BUFF_LEN: usize = 2048;
 /// Number of waves to track
-pub const WAVE_BUFFS_NUM: usize = 4;
+pub const WAVE_BUFFS_NUM: usize = 6;
 /// Sampling rate of the NAPSE board
 pub const SAMPLING_RATE: u32 = 250;
 

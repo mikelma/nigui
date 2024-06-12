@@ -23,6 +23,8 @@ pub fn plot_waves(ui: &mut egui::Ui) {
         Color32::from_rgb(135, 206, 235), // sky blue
         Color32::from_rgb(0, 255, 127),   // SpringGreen
         Color32::from_rgb(106, 90, 205),  // SlateBlue
+        Color32::from_rgb(255, 255, 153),  // Dav-id Yellow
+        Color32::from_rgb(255, 139, 255),  // NIT Pink
     ];
     let mut color_idx = 0;
     let mut idx = 0;

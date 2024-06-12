@@ -21,6 +21,7 @@ lazy_static! {
     pub static ref CH_STATUS: RwLock<[bool; WAVE_BUFFS_NUM]> = RwLock::new([true; WAVE_BUFFS_NUM]);
 
     pub static ref ERRORS: RwLock<Vec<String>> = RwLock::new(vec![]);
+    pub static ref NOTIFICATIONS: RwLock<Vec<String>> = RwLock::new(vec![]);
 }
 
 #[derive(Debug)]
@@ -195,12 +196,10 @@ pub fn read_napse() -> Result<(), Box<dyn Error>> {
             }
         }
 
-        let channel_data = [
-            to_float(data[0]),
-            to_float(data[1]),
-            to_float(data[2]),
-            to_float(data[3]),
-        ];
+        let mut channel_data = vec![];
+        for i in 0..WAVE_BUFFS_NUM {
+            channel_data.push(to_float(data[i]));
+        }
 
         // Write the readed data to the wave buffers
         {

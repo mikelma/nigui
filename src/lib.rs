@@ -4,12 +4,14 @@
 extern crate lazy_static;
 
 mod app;
+mod plugins;
 pub mod wave;
 pub mod wifi;
 pub use app::MyApp;
 
-use wifi::ERRORS;
+use wifi::{ERRORS, NOTIFICATIONS};
 
 pub fn log_err(msg: String) {
-    ERRORS.write().unwrap().push(msg);
+    ERRORS.write().unwrap().push(msg.clone());
+    NOTIFICATIONS.write().unwrap().push(msg);
 }
