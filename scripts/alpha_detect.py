@@ -1,8 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import BSpline, splrep, splev
-import sys
+from scipy.interpolate import splrep, splev
 from argparse import ArgumentParser
 
 

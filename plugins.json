@@ -13,11 +13,14 @@
             }
         },
         {
-            "name": "theta detect",
-            "help": "This is a test.",
-            "path": "scripts/theta_detect.py",
+            "name": "Spectrogram",
+            "help": "Plot spectrogram.",
+            "path": "scripts/spectrogram.py",
             "args": {
-                "--value": "int"
+                "--path": "$path",
+                "--channel": "0",
+                "--min-freq": "3",
+                "--max-freq": "40"
             }
         }
     ]
